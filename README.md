@@ -28,7 +28,7 @@ following, where the package and vulnerability details depends on what is identi
 ### Dependency tree of vulnerabilities
 If the `--info` flag is provided to gradle it will output a dependency tree which shows the transitive dependencies which have vulnerabilities.
 
-![Tree](docs/Tree.png)
+![Tree](docs/Tree.PNG)
 
 Report output
 -------------
