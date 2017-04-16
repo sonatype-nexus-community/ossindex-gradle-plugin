@@ -1,13 +1,12 @@
 package net.ossindex.gradle;
 
 import net.ossindex.gradle.audit.DependencyAuditor;
-import net.ossindex.gradle.input.GradleArtifact;
 import net.ossindex.gradle.input.ArtifactGatherer;
+import net.ossindex.gradle.input.GradleArtifact;
 import net.ossindex.gradle.output.AuditResultReporter;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.artifacts.ModuleVersionIdentifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

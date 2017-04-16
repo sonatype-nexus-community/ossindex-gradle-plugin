@@ -64,11 +64,14 @@ public class GradleArtifact {
     }
 
     public String getDependencyTree(String prefix) {
-        String tree = prefix + getFullDescription() + "\n";
+        StringBuilder tree = new StringBuilder();
+        tree.append(prefix);
+        tree.append(getFullDescription());
+        tree.append("\n");
         for (GradleArtifact child : children) {
-            tree += child.getDependencyTree(prefix + "-");
+            tree.append(child.getDependencyTree(prefix + "-"));
         }
-        return tree;
+        return tree.toString();
     }
 
     private void addChildren(ResolvedDependency gradleArtifact) {
@@ -78,7 +81,6 @@ public class GradleArtifact {
                 }
         );
     }
-
 
     @Override
     public boolean equals(Object o) {

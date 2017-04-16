@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class DependencyAuditor {
-    private Map<PackageDescriptor, PackageDescriptor> parents = new HashMap<PackageDescriptor, PackageDescriptor>();
+    private Map<PackageDescriptor, PackageDescriptor> parents = new HashMap<>();
     private IPackageRequest request = OssIndexApi.createPackageRequest();
 
     public DependencyAuditor(Set<GradleArtifact> gradleArtifacts) {
