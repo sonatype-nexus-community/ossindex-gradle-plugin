@@ -42,7 +42,7 @@ public class AuditResultReporter {
 
     private void reportVulnerableArtifact(GradleArtifact importingArtifact, MavenPackageDescriptor descriptor) {
         logger.error(String.format("%s introduces %s which has %s vulnerabilities",
-                importingArtifact.getFullDescription(), descriptor.getMavenVersionId(), descriptor.getVulnerabilityTotal()));
+                importingArtifact.getFullDescription(), descriptor.getMavenVersionId(), descriptor.getVulnerabilityMatches()));
     }
 
     private void reportIntroducedVulnerabilities(MavenPackageDescriptor descriptor) {
