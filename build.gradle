@@ -1,0 +1,20 @@
+group 'net.ossindex'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'groovy'
+apply plugin: 'maven'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile gradleApi()
+    compile 'net.ossindex:ossindex-api:2.0.3'
+    //compile 'org.eclipse.aether:aether-api:1.1.0'
+    //compile 'org.eclipse.aether:aether-util:1.1.0'
+    testCompile 'junit:junit:4.12'
+}
