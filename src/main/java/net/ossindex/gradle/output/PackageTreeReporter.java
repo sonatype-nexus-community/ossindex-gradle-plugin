@@ -52,6 +52,7 @@ public class PackageTreeReporter {
     }
 
     private void printChild(GradleArtifact artifact, List<MavenPackageDescriptor> descriptors, StringBuilder builder, String prefix) {
+        builder.append("|");
         builder.append(prefix);
         builder.append(artifact.getFullDescription());
         if (hasVulnerabilities(artifact, descriptors)) {
