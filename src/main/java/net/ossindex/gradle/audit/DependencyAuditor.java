@@ -4,6 +4,7 @@ import net.ossindex.common.IPackageRequest;
 import net.ossindex.common.OssIndexApi;
 import net.ossindex.common.PackageDescriptor;
 import net.ossindex.gradle.input.GradleArtifact;
+import org.gradle.api.GradleException;
 
 import java.io.IOException;
 import java.util.*;
@@ -16,20 +17,27 @@ public class DependencyAuditor {
         addArtifactsToAudit(gradleArtifacts);
     }
 
-    public Collection<MavenPackageDescriptor> runAudit() throws IOException {
-        List<MavenPackageDescriptor> results = new LinkedList<>();
-        Collection<PackageDescriptor> packages = request.run();
-        for (PackageDescriptor pkg : packages) {
-            MavenPackageDescriptor mvnPkg = new MavenPackageDescriptor(pkg);
-            if (parents.containsKey(pkg)) {
-                PackageDescriptor parent = parents.get(pkg);
-                if (parent != null) {
-                    mvnPkg.setParent(new MavenIdWrapper(parent));
+    public Collection<MavenPackageDescriptor> runAudit() {
+        try {
+            List<MavenPackageDescriptor> results = new LinkedList<>();
+            Collection<PackageDescriptor> packages = request.run();
+            for (PackageDescriptor pkg : packages) {
+                MavenPackageDescriptor mvnPkg = new MavenPackageDescriptor(pkg);
+                if (parents.containsKey(pkg)) {
+                    PackageDescriptor parent = parents.get(pkg);
+                    if (parent != null) {
+                        mvnPkg.setParent(new MavenIdWrapper(parent));
+                    }
+                }
+                if (mvnPkg.getVulnerabilityMatches() > 0) {
+                    results.add(mvnPkg);
                 }
             }
-            results.add(mvnPkg);
+            return results;
         }
-        return results;
+        catch(IOException e) {
+            throw new GradleException("Error trying to get audit results", e);
+        }
     }
 
     private void addArtifactsToAudit(Set<GradleArtifact> gradleArtifacts) {

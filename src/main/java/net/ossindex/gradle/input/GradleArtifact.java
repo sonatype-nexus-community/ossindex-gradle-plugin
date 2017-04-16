@@ -59,19 +59,12 @@ public class GradleArtifact {
         return currentParent;
     }
 
-    public String getFullDescription() {
-        return String.format("%s:%s:%s", group, name, version);
+    public boolean containsPackage(String fullQualifiedName) {
+        return getAllArtifacts().stream().anyMatch(c -> c.getFullDescription().equals(fullQualifiedName));
     }
 
-    public String getDependencyTree(String prefix) {
-        StringBuilder tree = new StringBuilder();
-        tree.append(prefix);
-        tree.append(getFullDescription());
-        tree.append("\n");
-        for (GradleArtifact child : children) {
-            tree.append(child.getDependencyTree(prefix + "-"));
-        }
-        return tree.toString();
+    public String getFullDescription() {
+        return String.format("%s:%s:%s", group, name, version);
     }
 
     private void addChildren(ResolvedDependency gradleArtifact) {

@@ -1,9 +1,12 @@
 package net.ossindex.gradle;
 
 import net.ossindex.gradle.audit.DependencyAuditor;
+import net.ossindex.gradle.audit.MavenPackageDescriptor;
 import net.ossindex.gradle.input.ArtifactGatherer;
 import net.ossindex.gradle.input.GradleArtifact;
 import net.ossindex.gradle.output.AuditResultReporter;
+import net.ossindex.gradle.output.PackageTreeReporter;
+import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -11,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Set;
 
 public class OssIndexPlugin implements Plugin<Project> {
@@ -27,15 +31,20 @@ public class OssIndexPlugin implements Plugin<Project> {
         ArtifactGatherer gatherer = new ArtifactGatherer();
         Set<GradleArtifact> gradleArtifacts = gatherer.gatherResolvedArtifacts(task.getProject());
         DependencyAuditor auditor = new DependencyAuditor(gradleArtifacts);
+
         AuditResultReporter reporter = new AuditResultReporter(gradleArtifacts);
 
         logger.info(String.format("Found %s gradleArtifacts to audit", gradleArtifacts.size()));
 
+        Collection<MavenPackageDescriptor> packagesWithVulnerabilities = auditor.runAudit();
+
         try {
-            reporter.reportResult(auditor.runAudit());
-        } catch (IOException e) {
-            e.printStackTrace();
+            reporter.reportResult(packagesWithVulnerabilities);
+        } finally {
+            PackageTreeReporter treeReporter = new PackageTreeReporter();
+            treeReporter.reportDependencyTree(gradleArtifacts, packagesWithVulnerabilities);
         }
+
     }
 
 }
