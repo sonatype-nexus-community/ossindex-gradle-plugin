@@ -67,7 +67,13 @@ TODO
 Disable fail on error
 ------------------------
 
-TODO
+To let the build continue when vulnerabilities are found you can override the `failOnError` property:
+
+```
+audit {
+    failOnError = false
+}
+```
 
 Ignore vulnerability for package(s)
 -----------------------------------

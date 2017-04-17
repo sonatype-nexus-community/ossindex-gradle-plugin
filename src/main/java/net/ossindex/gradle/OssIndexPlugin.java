@@ -13,7 +13,6 @@ import org.gradle.api.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
 
@@ -23,6 +22,7 @@ public class OssIndexPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
+        project.getExtensions().create("audit", AuditExtensions.class);
         Task audit = project.task("audit");
         audit.doLast(this::doAudit);
     }
@@ -40,6 +40,10 @@ public class OssIndexPlugin implements Plugin<Project> {
 
         try {
             reporter.reportResult(packagesWithVulnerabilities);
+        } catch (GradleException e) {
+            if (shouldFailOnError(task.getProject())) {
+                throw e;
+            }
         } finally {
             PackageTreeReporter treeReporter = new PackageTreeReporter();
             treeReporter.reportDependencyTree(gradleArtifacts, packagesWithVulnerabilities);
@@ -47,4 +51,8 @@ public class OssIndexPlugin implements Plugin<Project> {
 
     }
 
+    private boolean shouldFailOnError(Project project) {
+        AuditExtensions extension = (AuditExtensions) project.getExtensions().getByName("audit");
+        return extension.failOnError;
+    }
 }

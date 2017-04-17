@@ -1,14 +1,12 @@
 package net.ossindex.integrationtests
 
 import org.gradle.testkit.runner.GradleRunner
-import org.junit.Before
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
-import static org.junit.Assert.assertEquals
 
 class OssIndexAuditPluginTests extends Specification {
     @Rule
@@ -67,5 +65,39 @@ class OssIndexAuditPluginTests extends Specification {
         result.task(":audit").outcome.is(FAILED)
         result.output.contains("vulnerabilities found!")
     }
+
+    def "a project with vulnerable dependencies which should continue on error should pass"() {
+        given: "A project with vulnerable dependencies"
+        buildFile << """
+            plugins {
+                id 'net.ossindex.audit'
+                id 'java'
+            }
+            
+            repositories {
+                mavenCentral()
+            }
+            
+            dependencies {
+                compile 'org.grails:grails:2.0.1'
+            }
+            
+            audit {
+                failOnError = false
+            }
+        """
+
+        when:
+        def result = GradleRunner.create()
+                .withProjectDir(testProjectDir.root)
+                .withArguments("audit")
+                .withPluginClasspath()
+                .build()
+
+        then:
+        result.task(":audit").outcome.is(SUCCESS)
+        result.output.contains("vulnerabilities found!")
+    }
 }
+
 
