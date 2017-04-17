@@ -36,7 +36,7 @@ class OssIndexAuditPluginTests extends Specification {
                 .build()
 
         then:
-        assertEquals(result.task(":audit").outcome, SUCCESS)
+        result.task(":audit").outcome.is(SUCCESS)
     }
 
     def "a project with vulnerable dependencies should fail"() {
