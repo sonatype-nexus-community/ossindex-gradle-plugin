@@ -1,5 +1,6 @@
 package net.ossindex.gradle.output;
 
+import net.ossindex.gradle.AuditExtensions;
 import net.ossindex.gradle.audit.MavenPackageDescriptor;
 import net.ossindex.gradle.input.GradleArtifact;
 import org.gradle.api.GradleException;
@@ -13,15 +14,19 @@ import java.util.stream.Collectors;
 public class AuditResultReporter {
     private static final Logger logger = LoggerFactory.getLogger(AuditResultReporter.class);
     private final Set<GradleArtifact> resolvedTopLevelArtifacts;
+    private final AuditExtensions settings;
     private Set<GradleArtifact> allGradleArtifacts;
 
-    public AuditResultReporter(Set<GradleArtifact> resolvedTopLevelArtifacts) {
+    public AuditResultReporter(Set<GradleArtifact> resolvedTopLevelArtifacts, AuditExtensions settings) {
         this.resolvedTopLevelArtifacts = resolvedTopLevelArtifacts;
+        this.settings = settings;
     }
 
     public void reportResult(Collection<MavenPackageDescriptor> results) {
         int vulnerabilities = getSumOfVulnerabilities(results);
         if (vulnerabilities == 0) return;
+
+        int unignoredVulnerabilities = getUnignoredVulnerabilities(results);
 
         allGradleArtifacts = getAllDependencies();
 
@@ -30,12 +35,19 @@ public class AuditResultReporter {
                 logger.info("No vulnerabilities in " + descriptor.getMavenVersionId());
                 continue;
             }
+            if (settings.isIgnored(descriptor)) {
+                logger.info(descriptor.getMavenVersionId() + " is ignored due to settings");
+                continue;
+            }
             GradleArtifact importingGradleArtifact = findImportingArtifactFor(descriptor);
             reportVulnerableArtifact(importingGradleArtifact, descriptor);
             reportIntroducedVulnerabilities(descriptor);
         }
-        logger.error(vulnerabilities + " vulnerabilities found!");
-        throw new GradleException("Too many vulnerabilities (" + vulnerabilities + ") found.");
+        logger.error(String.format("%s unignored (of %s total) vulnerabilities found", unignoredVulnerabilities, vulnerabilities));
+
+        if (unignoredVulnerabilities == vulnerabilities) {
+            throw new GradleException("Too many vulnerabilities (" + vulnerabilities + ") found.");
+        }
     }
 
     private void reportVulnerableArtifact(GradleArtifact importingArtifact, MavenPackageDescriptor descriptor) {
@@ -62,5 +74,9 @@ public class AuditResultReporter {
 
     private int getSumOfVulnerabilities(Collection<MavenPackageDescriptor> results) {
         return results.stream().mapToInt(MavenPackageDescriptor::getVulnerabilityMatches).sum();
+    }
+
+    private int getUnignoredVulnerabilities(Collection<MavenPackageDescriptor> results) {
+        return results.stream().filter(d -> !settings.isIgnored(d)).mapToInt(MavenPackageDescriptor::getVulnerabilityMatches).sum();
     }
 }

@@ -78,4 +78,26 @@ audit {
 Ignore vulnerability for package(s)
 -----------------------------------
 
-TODO
+To ignore vulnerabilities from specific artifacts you can specify the artifacts on two ways:
+
+Ignore a specific version:
+```
+audit {
+    ignore = [ 'org.dependency:thelibrary:1.0.0' ]
+}
+```
+
+Ignore a specific artifact (all versions):
+```
+audit {
+    ignore = [ 'org.dependency:thelibrary' ]
+}
+```
+
+`ignore` is a list which makes it possible to ignore multiple artifacts:
+
+```
+audit {
+    ignore = [ 'org.dependency:thelibrary', 'net.awesomelibs:anotherlib:1.0.0' ]
+}
+```

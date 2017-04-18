@@ -1,5 +1,6 @@
 package net.ossindex.gradle.output;
 
+import net.ossindex.gradle.AuditExtensions;
 import net.ossindex.gradle.audit.MavenPackageDescriptor;
 import net.ossindex.gradle.input.GradleArtifact;
 import org.gradle.api.invocation.Gradle;
@@ -11,6 +12,11 @@ import java.util.*;
 public class PackageTreeReporter {
 
     private static final Logger logger = LoggerFactory.getLogger(PackageTreeReporter.class);
+    private final AuditExtensions settings;
+
+    public PackageTreeReporter(AuditExtensions extensions) {
+        settings = extensions;
+    }
 
     public void reportDependencyTree(Set<GradleArtifact> topLevelArtifacts, Collection<MavenPackageDescriptor> descriptorsWithVulnerabilities) {
         if (!logger.isInfoEnabled()) return;
@@ -66,6 +72,9 @@ public class PackageTreeReporter {
     }
 
     private boolean hasVulnerabilities(GradleArtifact artifact, List<MavenPackageDescriptor> descriptors) {
-        return descriptors.stream().anyMatch(d -> d.getMavenVersionId().equals(artifact.getFullDescription()));
+        return descriptors
+                .stream()
+                .filter(d -> !settings.isIgnored(d))
+                .anyMatch(d -> d.getMavenVersionId().equals(artifact.getFullDescription()));
     }
 }

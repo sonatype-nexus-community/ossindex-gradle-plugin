@@ -32,7 +32,7 @@ public class OssIndexPlugin implements Plugin<Project> {
         Set<GradleArtifact> gradleArtifacts = gatherer.gatherResolvedArtifacts(task.getProject());
         DependencyAuditor auditor = new DependencyAuditor(gradleArtifacts);
 
-        AuditResultReporter reporter = new AuditResultReporter(gradleArtifacts);
+        AuditResultReporter reporter = new AuditResultReporter(gradleArtifacts, getAuditExtensions(task.getProject()));
 
         logger.info(String.format("Found %s gradleArtifacts to audit", gradleArtifacts.size()));
 
@@ -45,14 +45,17 @@ public class OssIndexPlugin implements Plugin<Project> {
                 throw e;
             }
         } finally {
-            PackageTreeReporter treeReporter = new PackageTreeReporter();
+            PackageTreeReporter treeReporter = new PackageTreeReporter(getAuditExtensions(task.getProject()));
             treeReporter.reportDependencyTree(gradleArtifacts, packagesWithVulnerabilities);
         }
 
     }
 
     private boolean shouldFailOnError(Project project) {
-        AuditExtensions extension = (AuditExtensions) project.getExtensions().getByName("audit");
-        return extension.failOnError;
+        return getAuditExtensions(project).failOnError;
+    }
+
+    private AuditExtensions getAuditExtensions(Project project) {
+        return (AuditExtensions) project.getExtensions().getByName("audit");
     }
 }

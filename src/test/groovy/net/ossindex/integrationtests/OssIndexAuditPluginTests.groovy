@@ -63,7 +63,7 @@ class OssIndexAuditPluginTests extends Specification {
 
         then:
         result.task(":audit").outcome.is(FAILED)
-        result.output.contains("vulnerabilities found!")
+        result.output.contains("vulnerabilities found")
     }
 
     def "a project with vulnerable dependencies which should continue on error should pass"() {
@@ -96,7 +96,71 @@ class OssIndexAuditPluginTests extends Specification {
 
         then:
         result.task(":audit").outcome.is(SUCCESS)
-        result.output.contains("vulnerabilities found!")
+        result.output.contains("vulnerabilities found")
+    }
+
+    def "a project which ignores a specific artifact and version should pass"() {
+        given: "A project which ignores the vulnerability with specific version"
+        buildFile << """
+            plugins {
+                id 'net.ossindex.audit'
+                id 'java'
+            }
+            
+            repositories {
+                mavenCentral()
+            }
+            
+            dependencies {
+                compile 'org.grails:grails:2.0.1'
+            }
+            
+            audit {
+                ignore = [ 'org.grails:grails:2.0.1' ]
+            }
+        """
+
+        when:
+        def result = GradleRunner.create()
+                .withProjectDir(testProjectDir.root)
+                .withArguments("audit")
+                .withPluginClasspath()
+                .build()
+
+        then:
+        result.task(":audit").outcome.is(SUCCESS)
+    }
+
+    def "a project which ignores a specific artifact and all versions should pass"() {
+        given: "A project which ignores the vulnerability with all versions"
+        buildFile << """
+            plugins {
+                id 'net.ossindex.audit'
+                id 'java'
+            }
+            
+            repositories {
+                mavenCentral()
+            }
+            
+            dependencies {
+                compile 'org.grails:grails:2.0.1'
+            }
+            
+            audit {
+                ignore = [ 'org.grails:grails' ]
+            }
+        """
+
+        when:
+        def result = GradleRunner.create()
+                .withProjectDir(testProjectDir.root)
+                .withArguments("audit")
+                .withPluginClasspath()
+                .build()
+
+        then:
+        result.task(":audit").outcome.is(SUCCESS)
     }
 }
 
