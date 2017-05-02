@@ -68,6 +68,8 @@ public class MavenPackageDescriptor extends MavenIdWrapper {
 
     /**
      * Get vulnerabilities belonging to this package.
+     *
+     * @return all vulnerabilities
      */
     public List<VulnerabilityDescriptor> getVulnerabilities() {
         return vulnerabilities;
