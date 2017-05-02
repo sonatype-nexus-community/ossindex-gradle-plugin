@@ -45,7 +45,7 @@ public class AuditResultReporter {
         }
         logger.error(String.format("%s unignored (of %s total) vulnerabilities found", unignoredVulnerabilities, vulnerabilities));
 
-        if (unignoredVulnerabilities == vulnerabilities) {
+        if (unignoredVulnerabilities > 0) {
             throw new GradleException("Too many vulnerabilities (" + vulnerabilities + ") found.");
         }
     }

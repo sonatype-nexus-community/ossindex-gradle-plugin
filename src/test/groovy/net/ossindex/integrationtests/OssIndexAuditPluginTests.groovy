@@ -162,6 +162,40 @@ class OssIndexAuditPluginTests extends Specification {
         then:
         result.task(":audit").outcome.is(SUCCESS)
     }
+
+    def "a project which ignores a specific artifact but has another vulnerability should fail"() {
+        given: "A project with 2 vulnerable artifacts and one ignore"
+        buildFile << """
+            plugins {
+                id 'net.ossindex.audit'
+                id 'java'
+            }
+            
+            repositories {
+                mavenCentral()
+            }
+            
+            dependencies {
+                compile 'org.grails:grails:2.0.1'
+                compile 'com.squareup.okhttp3:mockwebserver:3.7.0'
+            }
+            
+            audit {
+                ignore = [ 'org.grails:grails' ]
+            }
+        """
+
+        when:
+        def result = GradleRunner.create()
+                .withProjectDir(testProjectDir.root)
+                .withArguments("audit")
+                .withPluginClasspath()
+                .buildAndFail()
+
+        then:
+        result.task(":audit").outcome.is(FAILED)
+        result.output.contains("Too many vulnerabilities (7) found.")
+    }
 }
 
 
