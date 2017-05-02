@@ -5,12 +5,55 @@ Requirements
 -------------
 
 * Gradle
-* An internet connection with access to https://ossindex.net 
+* An internet connection with access to https://ossindex.net
 
 Usage
 -----
 
-TODO (the plugin is yet to be released)
+# Installing
+
+(NOTE: Versions < 1.0 are considered preview)
+
+The plugin is available at the [Gradle plugin repository](https://plugins.gradle.org/plugin/net.ossindex.audit).
+
+To use it either place (replace `THEVERSION` with the correct version)
+
+```
+plugins {
+  id "net.ossindex.audit" version "THEVERSION"
+}
+```
+
+in your `build.gradle`.
+
+If you use an older Gradle version you can use
+
+```
+buildscript {
+  repositories {
+    maven {
+      url "https://plugins.gradle.org/m2/"
+    }
+  }
+  dependencies {
+    classpath "gradle.plugin.net.ossindex:ossindex-gradle-plugin:THEVERSION"
+  }
+}
+
+apply plugin: "net.ossindex.audit"
+```
+
+# Running the audit
+
+To run the audit standalone specify the task `audit`:
+
+`gradle audit`
+
+To use it before compiling write
+
+`compile.dependsOn audit`
+
+into your buildscript.
 
 # Success output
 This will run the OSS Index Auditor against the applicable maven project. A successful
