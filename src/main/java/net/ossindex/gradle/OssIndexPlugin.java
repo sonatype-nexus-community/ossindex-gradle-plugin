@@ -1,5 +1,6 @@
 package net.ossindex.gradle;
 
+import net.ossindex.gradle.audit.AuditorFactory;
 import net.ossindex.gradle.audit.DependencyAuditor;
 import net.ossindex.gradle.audit.MavenPackageDescriptor;
 import net.ossindex.gradle.audit.Proxy;
@@ -24,6 +25,12 @@ public class OssIndexPlugin implements Plugin<Project> {
     private static final Logger logger = LoggerFactory.getLogger(OssIndexPlugin.class);
     private List<Proxy> proxies = new LinkedList<>();
 
+    private AuditorFactory factory = new AuditorFactory();
+
+    public void setAuditorFactory(AuditorFactory factory) {
+        this.factory = factory;
+    }
+
     @Override
     public void apply(Project project) {
         project.getExtensions().create("audit", AuditExtensions.class);
@@ -42,7 +49,7 @@ public class OssIndexPlugin implements Plugin<Project> {
         Proxy proxy = new Proxy();
         proxy.setHost((String)project.findProperty("systemProp." + scheme + ".proxyHost"));
         Object port = project.findProperty("systemProp." + scheme + ".proxyPort");
-        proxy.setPort(port == null ? null : (Integer)port);
+        proxy.setPort(port == null ? null : Integer.parseInt((String)port));
         proxy.setUser((String)project.findProperty("systemProp." + scheme + ".proxyUser"));
         proxy.setPassword((String)project.findProperty("systemProp." + scheme + ".proxyPassword"));
         proxy.setNonProxyHosts((String)project.findProperty("systemProp." + scheme + ".nonProxyHosts"));
@@ -54,9 +61,9 @@ public class OssIndexPlugin implements Plugin<Project> {
     }
 
     private void doAudit(Task task) {
-        ArtifactGatherer gatherer = new ArtifactGatherer();
-        Set<GradleArtifact> gradleArtifacts = gatherer.gatherResolvedArtifacts(task.getProject());
-        DependencyAuditor auditor = new DependencyAuditor(gradleArtifacts, proxies);
+        ArtifactGatherer gatherer = factory.getGatherer();
+        Set<GradleArtifact> gradleArtifacts = gatherer != null ? gatherer.gatherResolvedArtifacts(task.getProject()) : null;
+        DependencyAuditor auditor = factory.getDependencyAuditor(gradleArtifacts, proxies);
 
         AuditResultReporter reporter = new AuditResultReporter(gradleArtifacts, getAuditExtensions(task.getProject()));
 

@@ -1,5 +1,7 @@
 package net.ossindex.gradle.audit;
 
+import java.util.Objects;
+
 public class Proxy
 {
   private String scheme;
@@ -89,5 +91,19 @@ public class Proxy
   @Override
   public String toString() {
     return user + "@" + host + ":" + getPort();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o instanceof Proxy) {
+      Proxy p = (Proxy)o;
+      return Objects.equals(scheme, p.scheme) &&
+          Objects.equals(host, p.host) &&
+          Objects.equals(port, p.port) &&
+          Objects.equals(user, p.user) &&
+          Objects.equals(password, p.password) &&
+          Objects.equals(nonProxyHosts, p.nonProxyHosts);
+    }
+    return false;
   }
 }
