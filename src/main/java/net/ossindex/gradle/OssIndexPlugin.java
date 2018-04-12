@@ -33,6 +33,7 @@ public class OssIndexPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
+        System.out.println("Local Version of OSSIndex");
         project.getExtensions().create("audit", AuditExtensions.class);
         Task audit = project.task("audit");
         Proxy proxy = getProxy(project, "http");
