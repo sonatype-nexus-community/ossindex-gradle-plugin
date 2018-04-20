@@ -1,13 +1,5 @@
 package net.ossindex.gradle.audit;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import net.ossindex.common.IPackageRequest;
 import net.ossindex.common.OssIndexApi;
 import net.ossindex.common.PackageDescriptor;
@@ -15,6 +7,14 @@ import net.ossindex.gradle.input.GradleArtifact;
 import org.gradle.api.GradleException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class DependencyAuditor
 {

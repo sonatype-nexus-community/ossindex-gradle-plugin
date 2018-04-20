@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AuditExtensions {
+    public String junitReport = null;
     public boolean failOnError = true;
     public List<String> ignore = new ArrayList<>();
 
