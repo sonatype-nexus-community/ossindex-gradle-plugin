@@ -118,8 +118,8 @@ audit {
 }
 ```
 
-Ignore vulnerability for package(s)
------------------------------------
+Ignore: Simple vulnerability management
+---------------------------------------
 
 To ignore vulnerabilities from specific artifacts you can specify the artifacts on two ways:
 
@@ -144,3 +144,107 @@ audit {
     ignore = [ 'org.dependency:thelibrary', 'net.awesomelibs:anotherlib:1.0.0' ]
 }
 ```
+
+Exclusions: Advanced vulnerability management
+---------------------------------------------
+Exclusions provide a similar task as "ignore", but with more expressiveness.
+
+Ignore all vulnerabilities in a specific package version. This ignores only vulnerabilities
+directly in the specified package.
+
+```
+audit {
+    exclusion = {
+        packages: [ 'org.dependency:thelibrary:1.0.0' ]
+    }
+}
+```
+
+Ignore all vulnerabilities in a specific package. This ignores only vulnerabilities
+directly in the specified package.
+
+```
+audit {
+    exclusion = {
+        packages: [ 'org.dependency:thelibrary' ]
+    }
+}
+```
+
+Ignore a specific vulnerability. Some vulnerabilities are assigned to multiple
+packages. This will ignore *all instances* of this vulnerability in any package.
+
+```
+audit {
+    exclusion = {
+        id: [ '1234567890' ]
+    }
+}
+```
+
+Ignore a specific vulnerability in a specific package version's dependencies. Note that this
+vulnerability does not necessarily need to belong to the exact package, but be
+somewhere in the dependency tree under the package.
+
+As vulnerabilities are assigned to "vulnerable packages", including a the vulnerable
+package in this way will ignore the vulnerability for *anyone* who depends on this
+package version.
+
+Instead you can specify a parent package which does not express the vulnerability or
+otherwise mitigates the problem, which other packages which include the vulnerable
+package will still report the vulnerability.
+
+```
+audit {
+    exclusion = {
+        packages: [ 'org.dependency:thelibrary:1.0.0' ]
+        id: [ '1234567890' ]
+    }
+}
+```
+
+Ignore a specific vulnerability belonging to a specific package's dependencies
+(any version).  Note that this
+vulnerability does not necessarily need to belong to the exact package, but be
+somewhere in the dependency tree under the package.
+
+As vulnerabilities are assigned to "vulnerable packages", including a the vulnerable
+package in this way will ignore the vulnerability for *anyone* who depends on this
+package.
+
+Instead you can specify a parent package which does not express the vulnerability or
+otherwise mitigates the problem, which other packages which include the vulnerable
+package will still report the vulnerability.
+
+```
+audit {
+    exclusion = {
+        packages: [ 'org.dependency:thelibrary' ]
+        id: [ '1234567890' ]
+    }
+}
+```
+
+Ignore a specific vulnerability belonging to a dependency path that has multiple
+packages that MUST be in the path. This can handle more complex situations.
+
+For example: The same vulnerability can affect both package 'A' and 'B'. Our code includes
+'A' as a dependency of 'Z'.
+
+By setting up the exclusion using **both** 'A' and 'Z' we exclude the vulnerability
+only in the situation where it is found in package 'A' when included by 'Z'.
+
+The vulnerability will still be reported if:
+
+* We include package 'B' anywhere
+* We include package 'A' as a dependency of any other package
+
+```
+audit {
+    exclusion = {
+        packages: [ 'org.parent.package:theParent', 'org.dependency:vulnerablePackage ]
+        id: [ '1234567890' ]
+    }
+}
+```
+
