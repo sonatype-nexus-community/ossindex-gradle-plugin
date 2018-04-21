@@ -59,14 +59,13 @@ public class OssIndexPlugin implements Plugin<Project> {
             this.junitXmlReportWriter = new JunitXmlReportWriter();
         }
         if (this.instanceId == null) { instanceId = 0; }
-//        instanceId += 1;
     }
 
     @Override
     public void apply(Project project) {
 
         instanceId += 1;
-
+System.out.println("Instance ID = " + instanceId);
         this.project = project;
 
         project.getExtensions().create("audit", AuditExtensions.class);
@@ -128,18 +127,19 @@ public class OssIndexPlugin implements Plugin<Project> {
         } finally {
             PackageTreeReporter treeReporter = new PackageTreeReporter(getAuditExtensions(task.getProject()));
             treeReporter.reportDependencyTree(gradleArtifacts, packagesWithVulnerabilities);
-
+//System.out.println("Instance ID = " + instanceId);
             if ((instanceId -= 1) == 0) {
                 try {
-//                    JunitXmlReportWriter junitXmlReportWriter = reporter.getJunitXmlReportWriter();
-                    // Update the "tests" attribute for testsuites
-                    String testCount = junitXmlReportWriter.getTotalOfElementsByName("testsuite").toString();
-                    junitXmlReportWriter.modifyElementAttribute("testsuites", 0, "tests", testCount);
-                    String failureCount = junitXmlReportWriter.getTotalOfElementsByName("failure").toString();
-                    junitXmlReportWriter.modifyElementAttribute("testsuites", 0, "failures", failureCount);
-                    String errorCount = junitXmlReportWriter.getTotalOfElementsByName("error").toString();
-                    junitXmlReportWriter.modifyElementAttribute("testsuites", 0, "errors", errorCount);
 
+//                    String testCount = junitXmlReportWriter.getTotalOfElementsByName("testsuite").toString();
+//                    junitXmlReportWriter.modifyElementAttribute("testsuites", 0, "tests", testCount);
+//                    String failureCount = junitXmlReportWriter.getTotalOfElementsByName("failure").toString();
+//                    junitXmlReportWriter.modifyElementAttribute("testsuites", 0, "failures", failureCount);
+//                    String errorCount = junitXmlReportWriter.getTotalOfElementsByName("error").toString();
+//                    junitXmlReportWriter.modifyElementAttribute("testsuites", 0, "errors", errorCount);
+
+
+System.out.println("Printing report " + reporter.getJunitReport());
                     junitXmlReportWriter.writeXmlReport(reporter.getJunitReport());
                 } catch (Exception e) {
                     System.out.println("Failed to create JUnit Plugin report: " + e.getMessage());
