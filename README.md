@@ -145,8 +145,8 @@ audit {
 }
 ```
 
-Exclusions: Advanced vulnerability management
----------------------------------------------
+[ALPHA] Exclusions: Advanced vulnerability management
+-----------------------------------------------------
 Exclusions provide a similar task as "ignore", but with more expressiveness.
 
 Ignore all vulnerabilities in a specific package version. This ignores only vulnerabilities
