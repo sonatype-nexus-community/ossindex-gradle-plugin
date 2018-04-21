@@ -65,7 +65,6 @@ public class OssIndexPlugin implements Plugin<Project> {
     public void apply(Project project) {
 
         instanceId += 1;
-System.out.println("Instance ID = " + instanceId);
         this.project = project;
 
         project.getExtensions().create("audit", AuditExtensions.class);
@@ -127,19 +126,14 @@ System.out.println("Instance ID = " + instanceId);
         } finally {
             PackageTreeReporter treeReporter = new PackageTreeReporter(getAuditExtensions(task.getProject()));
             treeReporter.reportDependencyTree(gradleArtifacts, packagesWithVulnerabilities);
-//System.out.println("Instance ID = " + instanceId);
-            if ((instanceId -= 1) == 0) {
+
+            if ((instanceId -= 1) == 0 && this.junitReport != null) {
                 try {
-
-//                    String testCount = junitXmlReportWriter.getTotalOfElementsByName("testsuite").toString();
-//                    junitXmlReportWriter.modifyElementAttribute("testsuites", 0, "tests", testCount);
-//                    String failureCount = junitXmlReportWriter.getTotalOfElementsByName("failure").toString();
-//                    junitXmlReportWriter.modifyElementAttribute("testsuites", 0, "failures", failureCount);
-//                    String errorCount = junitXmlReportWriter.getTotalOfElementsByName("error").toString();
-//                    junitXmlReportWriter.modifyElementAttribute("testsuites", 0, "errors", errorCount);
-
-
-System.out.println("Printing report " + reporter.getJunitReport());
+                    String testCount = junitXmlReportWriter.getTotalOfElementsByName("testcase").toString();
+                    junitXmlReportWriter.modifyElementAttribute("testsuites", 0, "tests", testCount);
+                    String failureCount = junitXmlReportWriter.getTotalOfElementsByName("failure").toString();
+                    junitXmlReportWriter.modifyElementAttribute("testsuites", 0, "failures", failureCount);
+                    System.out.println("Creating Junit Report");
                     junitXmlReportWriter.writeXmlReport(reporter.getJunitReport());
                 } catch (Exception e) {
                     System.out.println("Failed to create JUnit Plugin report: " + e.getMessage());

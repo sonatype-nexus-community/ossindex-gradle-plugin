@@ -9,6 +9,7 @@ import org.w3c.dom.Node;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -32,6 +33,12 @@ public class JunitXmlReportWriter {
         return rootElement;
     }
 
+    public Element getTestSuite() {
+        return testSuite;
+    }
+
+    private Element testSuite;
+
     private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss");
 
     public JunitXmlReportWriter() {
@@ -47,12 +54,15 @@ public class JunitXmlReportWriter {
         doc = docBuilder.newDocument();
         rootElement = doc.createElement("testsuites");
         doc.appendChild(rootElement);
-        addElementAttribute(rootElement, "disabled", "false");
-        addElementAttribute(rootElement, "errors", "0");
+        addElementAttribute(rootElement, "id", "1");
         addElementAttribute(rootElement, "failures", "0");
-        addElementAttribute(rootElement, "name", "");
         addElementAttribute(rootElement, "tests", "0");
-        addElementAttribute(rootElement, "timestamp", formattedTimestamp());
+        addElementAttribute(rootElement, "time", "0");
+
+        // Top level test suite
+        testSuite = addChildElement(rootElement,"testsuite", "");
+        addElementAttribute(testSuite, "id", "1");
+        addElementAttribute(testSuite, "name", "OSSIndex");
     }
 
     public void writeXmlReport(String pathToReport) throws Exception {
@@ -61,6 +71,10 @@ public class JunitXmlReportWriter {
             Transformer transformer = transformerFactory.newTransformer();
             DOMSource source = new DOMSource(doc);
             StreamResult result = new StreamResult(new File(pathToReport));
+
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+
             transformer.transform(source, result);
         } else {
             throw new java.io.IOException("Report (" + pathToReport + ") failed permissions check.");

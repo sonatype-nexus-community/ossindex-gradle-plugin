@@ -19,7 +19,7 @@ public class AuditResultReporter {
     private final Set<GradleArtifact> resolvedTopLevelArtifacts;
     private final AuditExtensions settings;
     private Set<GradleArtifact> allGradleArtifacts;
-    private Element currentTestSuite = null;
+    private Element testSuite = null;
     private String currentVulnerableArtifact = null;
     ArrayList<String> currentVulnerabilityList = new ArrayList<>();
     private String currentVulnerabilityTotals = null;
@@ -37,12 +37,16 @@ public class AuditResultReporter {
 
     private String junitReport;
 
+    private Integer instanceId;
+
     public AuditResultReporter(Set<GradleArtifact> resolvedTopLevelArtifacts, AuditExtensions settings, OssIndexPlugin ossIndexPlugin) {
         this.resolvedTopLevelArtifacts = resolvedTopLevelArtifacts;
         this.settings = ossIndexPlugin.getSettings();
         this.junitReport = ossIndexPlugin.getJunitReport();
         this.junitXmlReportWriter = ossIndexPlugin.getJunitXmlReportWriter();
+        this.instanceId = ossIndexPlugin.instanceId;
         this.thisTask = ossIndexPlugin.thisTask;
+        this.testSuite = ossIndexPlugin.getJunitXmlReportWriter().getTestSuite();
     }
 
     public void reportResult(Collection<MavenPackageDescriptor> results) {
@@ -50,9 +54,6 @@ public class AuditResultReporter {
         if (vulnerabilities == 0) return;
 
         int unignoredVulnerabilities = getUnignoredVulnerabilities(results);
-
-        currentTestSuite = addChildElementToReport("testsuite", "");
-        junitXmlReportWriter.addElementAttribute(currentTestSuite, "name", thisTask);
 
         allGradleArtifacts = getAllDependencies();
 
@@ -70,17 +71,14 @@ public class AuditResultReporter {
             // These calls report on the vulnerable artifact and then each vulnerability in it
             reportVulnerableArtifact(importingGradleArtifact, descriptor);
             reportIntroducedVulnerabilities(descriptor);
-
-            // Update the JUnit plugin XML report object
-            updateJunitReport();
         }
 
         // Now reporting on the totals for this vulnerable package
         currentVulnerabilityTotals = String.format("%s unignored (of %s total) vulnerabilities found", unignoredVulnerabilities, vulnerabilities);
-        junitXmlReportWriter.addChildElement(currentTestSuite, "totals", currentVulnerabilityTotals);
         logger.error(currentVulnerabilityTotals);
 
-
+        // Update the JUnit plugin XML report object
+        updateJunitReport();
 
         if (unignoredVulnerabilities > 0) {
             throw new GradleException("Too many vulnerabilities (" + vulnerabilities + ") found.");
@@ -88,8 +86,24 @@ public class AuditResultReporter {
     }
 
     private void updateJunitReport() {
-        junitXmlReportWriter.addChildElement(currentTestSuite, "testcase", currentVulnerableArtifact);
-        currentVulnerabilityList.forEach(v -> junitXmlReportWriter.addChildElement(currentTestSuite, "failure", v));
+
+        // Change to empty string for text, add name tag set to
+        Element testCase = junitXmlReportWriter.addChildElement(testSuite, "testcase", "");
+        junitXmlReportWriter.addElementAttribute(testCase, "name", thisTask + " - " + currentVulnerabilityTotals);
+        junitXmlReportWriter.addElementAttribute(testCase, "id", instanceId.toString());
+
+        if (currentVulnerableArtifact != null) {
+            Element failure = junitXmlReportWriter.addChildElement(testCase, "failure", buildFailureString());
+            junitXmlReportWriter.addElementAttribute(failure, "message", currentVulnerableArtifact);
+        }
+    }
+
+    private  String buildFailureString() {
+        String failureString = "";
+        for (String tmp: currentVulnerabilityList){
+            failureString = failureString + tmp + "\n";
+        }
+        return failureString.trim();
     }
 
     private void reportVulnerableArtifact(GradleArtifact importingArtifact, MavenPackageDescriptor descriptor) {
