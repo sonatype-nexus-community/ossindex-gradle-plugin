@@ -12,6 +12,7 @@ import org.gradle.api.plugins.ExtensionContainer;
 import org.junit.Test;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -106,7 +107,7 @@ public class ProxyTests
     when(factory.getGatherer()).thenReturn(gatherer);
 
     DependencyAuditor auditor = mock(DependencyAuditor.class);
-    when(factory.getDependencyAuditor(null, any(), any())).thenReturn(auditor);
+    when(factory.getDependencyAuditor(eq(null), any(), any())).thenReturn(auditor);
     return factory;
   }
 

@@ -34,8 +34,8 @@ public class AuditExclusion
    */
   public void apply(final IVulnerabilityFilter filter) {
     List<PackageCoordinate> list = getPackageList();
-    if (vid == null && list.size() == 1) {
-      filter.ignorePackage(list.get(0));
+    if (vid == null) {
+      filter.ignorePackage(list);
     }
     else {
       filter.ignoreVulnerability(list, vid);
