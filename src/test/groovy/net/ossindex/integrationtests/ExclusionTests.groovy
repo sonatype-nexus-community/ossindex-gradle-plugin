@@ -231,11 +231,11 @@ class ExclusionTests extends Specification
             audit {
                 exclusion {
                     vid = '8396562328'
-                    packages = [ 'auditcom.squareup.okhttp3:mockwebserver:3.7.0' ]
+                    packages = [ 'com.squareup.okhttp3:mockwebserver:3.7.0' ]
                 }
                 exclusion {
                     vid = '8402763844'
-                    packages = [ 'org.bouncycastle:bcprov-jdk15on:1.50' ]
+                    packages = [ 'groupid:artifactid:1.50' ]
                 }
             }
         """
@@ -250,6 +250,6 @@ class ExclusionTests extends Specification
     then:
       result.task(":audit").outcome.is(FAILED)
       // This is only valid so long as no new vulnerabilities are found in these packages.
-      result.output.contains("8 unignored (of 10 total) vulnerabilities found")
+      result.output.contains("9 unignored (of 10 total) vulnerabilities found")
   }
 }
