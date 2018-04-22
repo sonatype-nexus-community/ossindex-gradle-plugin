@@ -3,6 +3,7 @@ package net.ossindex.gradle.audit;
 import java.util.List;
 import java.util.Set;
 
+import net.ossindex.gradle.AuditExtensions;
 import net.ossindex.gradle.input.ArtifactGatherer;
 import net.ossindex.gradle.input.GradleArtifact;
 
@@ -11,8 +12,10 @@ import net.ossindex.gradle.input.GradleArtifact;
  */
 public class AuditorFactory
 {
-  public DependencyAuditor getDependencyAuditor(Set< GradleArtifact > gradleArtifacts, List<Proxy> proxies) {
-    return new DependencyAuditor(gradleArtifacts, proxies);
+  public DependencyAuditor getDependencyAuditor(final AuditExtensions auditConfig,
+                                                final Set<GradleArtifact> gradleArtifacts,
+                                                final List<Proxy> proxies) {
+    return new DependencyAuditor(auditConfig, gradleArtifacts, proxies);
   }
 
   public ArtifactGatherer getGatherer() {

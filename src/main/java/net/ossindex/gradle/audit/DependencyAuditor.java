@@ -1,7 +1,9 @@
 package net.ossindex.gradle.audit;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -10,7 +12,12 @@ import java.util.Set;
 
 import net.ossindex.common.IPackageRequest;
 import net.ossindex.common.OssIndexApi;
+import net.ossindex.common.PackageCoordinate;
 import net.ossindex.common.PackageDescriptor;
+import net.ossindex.common.filter.IVulnerabilityFilter;
+import net.ossindex.common.filter.VulnerabilityFilterFactory;
+import net.ossindex.gradle.AuditExclusion;
+import net.ossindex.gradle.AuditExtensions;
 import net.ossindex.gradle.input.GradleArtifact;
 import org.gradle.api.GradleException;
 import org.slf4j.Logger;
@@ -22,14 +29,30 @@ public class DependencyAuditor
 
   private Map<PackageDescriptor, PackageDescriptor> parents = new HashMap<>();
 
-  private IPackageRequest request = OssIndexApi.createPackageRequest();
+  private IPackageRequest request;
 
-  public DependencyAuditor(Set<GradleArtifact> gradleArtifacts, final List<Proxy> proxies) {
+  public DependencyAuditor(final AuditExtensions auditConfig,
+                           Set<GradleArtifact> gradleArtifacts,
+                           final List<Proxy> proxies)
+  {
     for (Proxy proxy : proxies) {
       logger.error("Using proxy: " + proxy);
-      request.addProxy(proxy.getScheme(), proxy.getHost(), proxy.getPort(), proxy.getUser(), proxy.getPassword());
+      OssIndexApi.addProxy(proxy.getScheme(), proxy.getHost(), proxy.getPort(), proxy.getUser(), proxy.getPassword());
     }
+    request = OssIndexApi.createPackageRequest();
+    configure(auditConfig);
     addArtifactsToAudit(gradleArtifacts);
+  }
+
+  private void configure(final AuditExtensions config) {
+    if (config != null) {
+      IVulnerabilityFilter filter = VulnerabilityFilterFactory.getInstance().createVulnerabilityFilter();
+      Collection<AuditExclusion> exclusions = config.getExclusions();
+      for (AuditExclusion exclusion : exclusions) {
+        exclusion.apply(filter);
+      }
+      request.addVulnerabilityFilter(filter);
+    }
   }
 
   public Collection<MavenPackageDescriptor> runAudit() {
@@ -59,20 +82,29 @@ public class DependencyAuditor
     gradleArtifacts.forEach(this::addArtifact);
   }
 
-  private void addPackageDependencies(PackageDescriptor parent, GradleArtifact gradleArtifact) {
+  private void addArtifact(GradleArtifact gradleArtifact) {
+    PackageCoordinate parentCoordinate = buildCoordinate(gradleArtifact);
+    PackageDescriptor parent = request.add(Collections.singletonList(parentCoordinate));
+    parents.put(parent, null);
+    gradleArtifact.getAllChildren().forEach(c -> addPackageDependencies(parent, parentCoordinate, c));
+  }
+
+  private void addPackageDependencies(PackageDescriptor parent, PackageCoordinate parentCoordinate, GradleArtifact gradleArtifact) {
     PackageDescriptor pkgDep = new PackageDescriptor("maven", gradleArtifact.getGroup(), gradleArtifact.getName(),
         gradleArtifact.getVersion());
     if (!parents.containsKey(pkgDep)) {
-      pkgDep = request.add("maven", gradleArtifact.getGroup(), gradleArtifact.getName(), gradleArtifact.getVersion());
+      PackageCoordinate childCoordinate = buildCoordinate(gradleArtifact);
+      pkgDep = request.add(Arrays.asList(new PackageCoordinate[] {parentCoordinate, childCoordinate}));
       parents.put(pkgDep, parent);
     }
   }
 
-  private void addArtifact(GradleArtifact gradleArtifact) {
-    PackageDescriptor parent = request
-        .add("maven", gradleArtifact.getGroup(), gradleArtifact.getName(), gradleArtifact.getVersion());
-    parents.put(parent, null);
-    gradleArtifact.getAllChildren().forEach(c -> addPackageDependencies(parent, c));
+  private PackageCoordinate buildCoordinate(final GradleArtifact gradleArtifact) {
+    return PackageCoordinate.newBuilder()
+        .withFormat("maven")
+        .withNamespace(gradleArtifact.getGroup())
+        .withName(gradleArtifact.getName())
+        .withVersion(gradleArtifact.getVersion())
+        .build();
   }
-
 }
