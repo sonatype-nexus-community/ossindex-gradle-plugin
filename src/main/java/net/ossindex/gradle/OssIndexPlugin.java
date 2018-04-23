@@ -23,22 +23,10 @@ import java.util.Set;
 
 public class OssIndexPlugin implements Plugin<Project> {
 
-    public static JunitXmlReportWriter getJunitXmlReportWriter() {
-        return junitXmlReportWriter;
-    }
-
     public static JunitXmlReportWriter junitXmlReportWriter = null;
-
-    public static String getJunitReport() {
-        return junitReport;
-    }
 
     public static String junitReport = null;
     public static Integer instanceId;
-
-    public static AuditExtensions getSettings() {
-        return settings;
-    }
 
     private static AuditExtensions settings = null;
 
@@ -52,18 +40,17 @@ public class OssIndexPlugin implements Plugin<Project> {
         this.factory = factory;
     }
     private Project project = null;
-    public String thisTask = null;
 
     public OssIndexPlugin() {
         if (this.junitXmlReportWriter == null) {
             this.junitXmlReportWriter = new JunitXmlReportWriter();
         }
+
         if (this.instanceId == null) { instanceId = 0; }
     }
 
     @Override
     public void apply(Project project) {
-
         instanceId += 1;
         this.project = project;
 
@@ -97,8 +84,6 @@ public class OssIndexPlugin implements Plugin<Project> {
 
     private void doAudit(Task task) {
 
-        thisTask = project.getDisplayName().split(" ")[1].replaceAll("\'","") + ":audit";
-
         if (this.settings == null) {
             this.settings = getAuditExtensions(task.getProject());
         }
@@ -111,7 +96,11 @@ public class OssIndexPlugin implements Plugin<Project> {
         Set<GradleArtifact> gradleArtifacts = gatherer != null ? gatherer.gatherResolvedArtifacts(task.getProject()) : null;
         DependencyAuditor auditor = factory.getDependencyAuditor(gradleArtifacts, proxies);
 
-        reporter = new AuditResultReporter(gradleArtifacts, getAuditExtensions(task.getProject()), this);
+        reporter = new AuditResultReporter(gradleArtifacts,
+            getAuditExtensions(task.getProject()),
+            this,
+            junitXmlReportWriter,
+            project.getDisplayName().split(" ")[1].replaceAll("\'","") + ":audit");
 
         logger.info(String.format("Found %s gradleArtifacts to audit", gradleArtifacts.size()));
 
@@ -127,14 +116,10 @@ public class OssIndexPlugin implements Plugin<Project> {
             PackageTreeReporter treeReporter = new PackageTreeReporter(getAuditExtensions(task.getProject()));
             treeReporter.reportDependencyTree(gradleArtifacts, packagesWithVulnerabilities);
 
-            if ((instanceId -= 1) == 0 && this.junitReport != null) {
+            if (this.junitReport != null && (instanceId -= 1) == 0) {
                 try {
-                    String testCount = junitXmlReportWriter.getTotalOfElementsByName("testcase").toString();
-                    junitXmlReportWriter.modifyElementAttribute("testsuites", 0, "tests", testCount);
-                    String failureCount = junitXmlReportWriter.getTotalOfElementsByName("failure").toString();
-                    junitXmlReportWriter.modifyElementAttribute("testsuites", 0, "failures", failureCount);
                     System.out.println("Creating Junit Report");
-                    junitXmlReportWriter.writeXmlReport(reporter.getJunitReport());
+                    junitXmlReportWriter.writeXmlReport(junitReport);
                 } catch (Exception e) {
                     System.out.println("Failed to create JUnit Plugin report: " + e.getMessage());
                 }

@@ -19,8 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Set;
 
 public class JunitXmlReportWriter {
@@ -28,18 +27,7 @@ public class JunitXmlReportWriter {
     private DocumentBuilderFactory docFactory;
     private DocumentBuilder docBuilder;
     private Document doc;
-    private Element rootElement;
-    public Element getRootElement() {
-        return rootElement;
-    }
-
-    public Element getTestSuite() {
-        return testSuite;
-    }
-
     private Element testSuite;
-
-    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss");
 
     public JunitXmlReportWriter() {
 
@@ -52,12 +40,11 @@ public class JunitXmlReportWriter {
         }
 
         doc = docBuilder.newDocument();
-        rootElement = doc.createElement("testsuites");
+        Element rootElement = doc.createElement("testsuites");
         doc.appendChild(rootElement);
         addElementAttribute(rootElement, "id", "1");
         addElementAttribute(rootElement, "failures", "0");
         addElementAttribute(rootElement, "tests", "0");
-        addElementAttribute(rootElement, "time", "0");
 
         // Top level test suite
         testSuite = addChildElement(rootElement,"testsuite", "");
@@ -66,6 +53,12 @@ public class JunitXmlReportWriter {
     }
 
     public void writeXmlReport(String pathToReport) throws Exception {
+
+        String testCount = getTotalOfElementsByName("testcase").toString();
+        modifyElementAttribute("testsuites", 0, "tests", testCount);
+        String failureCount = getTotalOfElementsByName("failure").toString();
+        modifyElementAttribute("testsuites", 0, "failures", failureCount);
+
         if(parentDirIsWritable(pathToReport)) {
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             Transformer transformer = transformerFactory.newTransformer();
@@ -81,9 +74,25 @@ public class JunitXmlReportWriter {
         }
     }
 
-    private String formattedTimestamp() {
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        return sdf.format(timestamp);
+    public void updateJunitReport(String totals, String task, Integer instanceId, String artifact, ArrayList<String> currentVulnerabilityList) {
+
+        // Change to empty string for text, add name tag set to
+        Element testCase = addChildElement(testSuite, "testcase", "");
+        addElementAttribute(testCase, "name", task + " - " + totals);
+        addElementAttribute(testCase, "id", instanceId.toString());
+
+        if (artifact != null) {
+            Element failure = addChildElement(testCase, "failure", buildFailureString(currentVulnerabilityList));
+            addElementAttribute(failure, "message", artifact);
+        }
+    }
+
+    private  String buildFailureString(ArrayList<String> currentVulnerabilityList) {
+        String failureString = "";
+        for (String tmp: currentVulnerabilityList){
+            failureString = failureString + tmp + "\n";
+        }
+        return failureString.trim();
     }
 
     public void addElementAttribute(Element parent, String name, String value) {
