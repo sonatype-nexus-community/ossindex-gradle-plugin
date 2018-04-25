@@ -147,11 +147,11 @@ scan and then run the reporting plugin.
 
 ### Stages
 
-![Typical Pipeline Stage](https://github.com/museadmin/ossindex-gradle-plugin/blob/master/docs/pipeline_stages.png)
+![Typical Pipeline Stage](https://github.com/museadmin/ossindex-gradle-plugin/blob/simple-junit-xml-format-normalisation/docs/pipeline_stages.png)
 
 ### Report Output
 
-![Typical Report](https://github.com/museadmin/ossindex-gradle-plugin/blob/master/docs/example_report.png)
+![Typical Report](https://github.com/museadmin/ossindex-gradle-plugin/blob/simple-junit-xml-format-normalisation/docs/example_report.png)
 
 Disable fail on error
 ------------------------
