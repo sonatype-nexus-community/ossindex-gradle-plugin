@@ -115,7 +115,6 @@ public class OssIndexPlugin implements Plugin<Project> {
         } finally {
             PackageTreeReporter treeReporter = new PackageTreeReporter(getAuditExtensions(task.getProject()));
             treeReporter.reportDependencyTree(gradleArtifacts, packagesWithVulnerabilities);
-
             if (this.junitReport != null && (instanceId -= 1) == 0) {
                 try {
                     System.out.println("Creating Junit Report");
@@ -123,8 +122,6 @@ public class OssIndexPlugin implements Plugin<Project> {
                 } catch (Exception e) {
                     System.out.println("Failed to create JUnit Plugin report: " + e.getMessage());
                 }
-            } else {
-                System.out.println("Junit Report not required. Skipping report generation.");
             }
         }
     }

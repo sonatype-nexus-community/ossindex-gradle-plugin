@@ -24,9 +24,9 @@ import java.util.Set;
 
 public class JunitXmlReportWriter {
 
-    private DocumentBuilderFactory docFactory;
-    private DocumentBuilder docBuilder;
     private Document doc;
+    private DocumentBuilder docBuilder;
+    private DocumentBuilderFactory docFactory;
     private Element testSuite;
 
     public JunitXmlReportWriter() {
@@ -52,6 +52,19 @@ public class JunitXmlReportWriter {
         addElementAttribute(testSuite, "name", "OSSIndex");
     }
 
+    public void updateJunitReport(String totals, String task, Integer instanceId, String artifact, ArrayList<String> currentVulnerabilityList) {
+
+        // Change to empty string for text, add name tag set to
+        Element testCase = addChildElement(testSuite, "testcase", "");
+        addElementAttribute(testCase, "name", task + " - " + totals);
+        addElementAttribute(testCase, "id", instanceId.toString());
+
+        if (artifact != null) {
+            Element failure = addChildElement(testCase, "failure", buildFailureString(currentVulnerabilityList));
+            addElementAttribute(failure, "message", artifact);
+        }
+    }
+
     public void writeXmlReport(String pathToReport) throws Exception {
 
         String testCount = getTotalOfElementsByName("testcase").toString();
@@ -74,17 +87,17 @@ public class JunitXmlReportWriter {
         }
     }
 
-    public void updateJunitReport(String totals, String task, Integer instanceId, String artifact, ArrayList<String> currentVulnerabilityList) {
+    private Element addChildElement(Element parent, String name, String data) {
+        Element elem = doc.createElement(name);
+        elem.appendChild(doc.createTextNode(data));
+        parent.appendChild(elem);
+        return elem;
+    }
 
-        // Change to empty string for text, add name tag set to
-        Element testCase = addChildElement(testSuite, "testcase", "");
-        addElementAttribute(testCase, "name", task + " - " + totals);
-        addElementAttribute(testCase, "id", instanceId.toString());
-
-        if (artifact != null) {
-            Element failure = addChildElement(testCase, "failure", buildFailureString(currentVulnerabilityList));
-            addElementAttribute(failure, "message", artifact);
-        }
+    private void addElementAttribute(Element parent, String name, String value) {
+        Attr attr = doc.createAttribute(name);
+        attr.setValue(value);
+        parent.setAttributeNode(attr);
     }
 
     private  String buildFailureString(ArrayList<String> currentVulnerabilityList) {
@@ -95,24 +108,11 @@ public class JunitXmlReportWriter {
         return failureString.trim();
     }
 
-    public void addElementAttribute(Element parent, String name, String value) {
-        Attr attr = doc.createAttribute(name);
-        attr.setValue(value);
-        parent.setAttributeNode(attr);
-    }
-
-    public Element addChildElement(Element parent, String name, String data) {
-        Element elem = doc.createElement(name);
-        elem.appendChild(doc.createTextNode(data));
-        parent.appendChild(elem);
-        return elem;
-    }
-
-    public Integer getTotalOfElementsByName(String name) {
+    private Integer getTotalOfElementsByName(String name) {
         return doc.getElementsByTagName(name).getLength();
     }
 
-    public void modifyElementAttribute(String tagName, Integer index, String attrName, String value) {
+    private void modifyElementAttribute(String tagName, Integer index, String attrName, String value) {
         Node target = doc.getElementsByTagName(tagName).item(index);
         NamedNodeMap attr = target.getAttributes();
         Node nodeAttr = attr.getNamedItem(attrName);
