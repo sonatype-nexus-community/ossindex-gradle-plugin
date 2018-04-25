@@ -123,6 +123,8 @@ public class OssIndexPlugin implements Plugin<Project> {
                 } catch (Exception e) {
                     System.out.println("Failed to create JUnit Plugin report: " + e.getMessage());
                 }
+            } else {
+                System.out.println("Junit Report not required. Skipping report generation.");
             }
         }
     }
