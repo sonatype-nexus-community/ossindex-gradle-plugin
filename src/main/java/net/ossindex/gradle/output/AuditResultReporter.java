@@ -1,7 +1,6 @@
 package net.ossindex.gradle.output;
 
 import net.ossindex.gradle.AuditExtensions;
-import net.ossindex.gradle.OssIndexPlugin;
 import net.ossindex.gradle.audit.MavenPackageDescriptor;
 import net.ossindex.gradle.input.GradleArtifact;
 import org.gradle.api.GradleException;
@@ -29,13 +28,13 @@ public class AuditResultReporter {
 
     public AuditResultReporter(Set<GradleArtifact> resolvedTopLevelArtifacts,
                                AuditExtensions settings,
-                               OssIndexPlugin ossIndexPlugin,
+                               Integer instanceId,
                                JunitXmlReportWriter junitXmlReportWriter,
                                String thisTask) {
         this.resolvedTopLevelArtifacts = resolvedTopLevelArtifacts;
         this.settings = settings;
         this.junitXmlReportWriter = junitXmlReportWriter;
-        this.instanceId = ossIndexPlugin.instanceId;
+        this.instanceId = instanceId;
         this.thisTask = thisTask;
     }
 

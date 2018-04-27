@@ -73,7 +73,6 @@ public class JunitXmlReportWriter {
         modifyElementAttribute("testsuites", 0, "failures", failureCount);
 
         if(parentDirIsWritable(pathToReport)) {
-            deleteXmlReport(pathToReport);
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             Transformer transformer = transformerFactory.newTransformer();
             DOMSource source = new DOMSource(doc);
@@ -133,11 +132,5 @@ public class JunitXmlReportWriter {
         return false;
     }
 
-    private void deleteXmlReport(String pathToReport) {
-        File f = new File(pathToReport);
-        if(f.exists() && !f.isDirectory()) {
-            f.delete();
-        }
-    }
 }
 

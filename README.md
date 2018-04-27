@@ -130,6 +130,7 @@ To access this using the JUnit plugin in a Jenkins pipeline:
             }
             post {
                 always {
+                    sh "touch ./ossindex/junitReport.xml"
                     junit '**/ossindex/junitReport.xml'
                 }
             }

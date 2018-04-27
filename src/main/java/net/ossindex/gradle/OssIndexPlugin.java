@@ -25,8 +25,7 @@ public class OssIndexPlugin implements Plugin<Project> {
 
     public static JunitXmlReportWriter junitXmlReportWriter = null;
 
-    public static String junitReport = null;
-    public static Integer instanceId;
+    public static Integer instanceId = null;
 
     private static AuditExtensions settings = null;
 
@@ -34,7 +33,6 @@ public class OssIndexPlugin implements Plugin<Project> {
     private List<Proxy> proxies = new LinkedList<>();
 
     private AuditorFactory factory = new AuditorFactory();
-    private AuditResultReporter reporter = null;
 
     public void setAuditorFactory(AuditorFactory factory) {
         this.factory = factory;
@@ -87,18 +85,15 @@ public class OssIndexPlugin implements Plugin<Project> {
         if (this.settings == null) {
             this.settings = getAuditExtensions(task.getProject());
         }
-
-        if (this.junitReport == null) {
-            this.junitReport = settings.junitReport;
-        }
+        String junitReport = settings.junitReport;
 
         ArtifactGatherer gatherer = factory.getGatherer();
         Set<GradleArtifact> gradleArtifacts = gatherer != null ? gatherer.gatherResolvedArtifacts(task.getProject()) : null;
         DependencyAuditor auditor = factory.getDependencyAuditor(gradleArtifacts, proxies);
 
-        reporter = new AuditResultReporter(gradleArtifacts,
+        AuditResultReporter reporter = new AuditResultReporter(gradleArtifacts,
             getAuditExtensions(task.getProject()),
-            this,
+            instanceId,
             junitXmlReportWriter,
             project.getDisplayName().split(" ")[1].replaceAll("\'","") + ":audit");
 
@@ -115,13 +110,13 @@ public class OssIndexPlugin implements Plugin<Project> {
         } finally {
             PackageTreeReporter treeReporter = new PackageTreeReporter(getAuditExtensions(task.getProject()));
             treeReporter.reportDependencyTree(gradleArtifacts, packagesWithVulnerabilities);
-            if (this.junitReport != null && (instanceId -= 1) == 0) {
+            if ((instanceId -= 1) == 0 && junitReport != null) {
                 try {
                     System.out.println("Creating Junit Report");
                     junitXmlReportWriter.writeXmlReport(junitReport);
                     junitXmlReportWriter = null;
                 } catch (Exception e) {
-                    System.out.println("Failed to create JUnit Plugin report: " + e.getMessage());
+                    System.out.println("Failed to create JUnit Plugin report:  " + e.getMessage());
                 }
             }
         }
