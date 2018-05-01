@@ -119,6 +119,7 @@ public class ProxyTests
 
     ExtensionContainer extension = mock(ExtensionContainer.class);
     when(project.getExtensions()).thenReturn(extension);
+    when(project.getDisplayName()).thenReturn("Mock Mock");
 
     Task audit = mock(Task.class);
     when(audit.getProject()).thenReturn(project);
