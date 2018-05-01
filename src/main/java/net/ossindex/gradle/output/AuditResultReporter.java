@@ -8,6 +8,7 @@ import org.gradle.api.GradleException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -18,10 +19,25 @@ public class AuditResultReporter {
     private final Set<GradleArtifact> resolvedTopLevelArtifacts;
     private final AuditExtensions settings;
     private Set<GradleArtifact> allGradleArtifacts;
+    private String currentVulnerableArtifact = null;
+    ArrayList<String> currentVulnerabilityList = new ArrayList<>();
+    private String currentVulnerabilityTotals = null;
+    private String thisTask;
 
-    public AuditResultReporter(Set<GradleArtifact> resolvedTopLevelArtifacts, AuditExtensions settings) {
+    private JunitXmlReportWriter junitXmlReportWriter;
+
+    private Integer instanceId;
+
+    public AuditResultReporter(Set<GradleArtifact> resolvedTopLevelArtifacts,
+                               AuditExtensions settings,
+                               Integer instanceId,
+                               JunitXmlReportWriter junitXmlReportWriter,
+                               String thisTask) {
         this.resolvedTopLevelArtifacts = resolvedTopLevelArtifacts;
         this.settings = settings;
+        this.junitXmlReportWriter = junitXmlReportWriter;
+        this.instanceId = instanceId;
+        this.thisTask = thisTask;
     }
 
     public void reportResult(Collection<MavenPackageDescriptor> results) {
@@ -51,7 +67,18 @@ public class AuditResultReporter {
             int unExcludedVulnerabilities = expectedVulnerabilities - actualVulnerabilities;
             unignoredVulnerabilities -= unExcludedVulnerabilities;
         }
-        logger.error(String.format("%s unignored (of %s total) vulnerabilities found", unignoredVulnerabilities, vulnerabilities));
+
+        currentVulnerabilityTotals = String.format("%s unignored (of %s total) vulnerabilities found",
+            unignoredVulnerabilities,
+            vulnerabilities);
+        logger.error(currentVulnerabilityTotals);
+
+        // Update the JUnit plugin XML report object
+        junitXmlReportWriter.updateJunitReport(currentVulnerabilityTotals,
+            thisTask,
+            instanceId,
+            currentVulnerableArtifact,
+            currentVulnerabilityList);
 
         if (unignoredVulnerabilities > 0) {
             throw new GradleException("Too many vulnerabilities (" + vulnerabilities + ") found.");
@@ -59,14 +86,21 @@ public class AuditResultReporter {
     }
 
     private void reportVulnerableArtifact(GradleArtifact importingArtifact, MavenPackageDescriptor descriptor) {
-        logger.error(String.format("%s introduces %s which has %s vulnerabilities",
-                importingArtifact.getFullDescription(), descriptor.getMavenVersionId(), descriptor.getVulnerabilityMatches()));
+        currentVulnerableArtifact = String.format("%s introduces %s which has %s vulnerabilities",
+                importingArtifact.getFullDescription(), descriptor.getMavenVersionId(), descriptor.getVulnerabilityMatches());
+        logger.error(currentVulnerableArtifact);
     }
 
-    private int reportIntroducedVulnerabilities(MavenPackageDescriptor descriptor) {
+    private void reportIntroducedVulnerabilities(MavenPackageDescriptor descriptor) {
+        currentVulnerabilityList.clear();
         List<VulnerabilityDescriptor> vulns = descriptor.getVulnerabilities();
         vulns.forEach(v -> logger.error(String.format("=> %s (see %s)", v.getTitle(), v.getUriString())));
         return vulns.size();
+    }
+
+    private void reportVulnerability(String line) {
+        logger.error(line);
+        currentVulnerabilityList.add(line);
     }
 
     private GradleArtifact findImportingArtifactFor(MavenPackageDescriptor mavenPackageDescriptor) {

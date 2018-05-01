@@ -14,6 +14,8 @@ public class AuditExtensions
 {
   private final Project project;
 
+  public String junitReport;
+
   public boolean failOnError = true;
 
   public List<String> ignore = new ArrayList<>();

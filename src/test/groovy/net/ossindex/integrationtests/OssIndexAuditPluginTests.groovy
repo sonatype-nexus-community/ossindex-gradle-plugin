@@ -163,6 +163,7 @@ class OssIndexAuditPluginTests extends Specification {
         result.task(":audit").outcome.is(SUCCESS)
     }
 
+
     def "a project which ignores a specific artifact but has another vulnerability should fail"() {
         given: "A project with 2 vulnerable artifacts and one ignore"
         buildFile << """
@@ -170,16 +171,16 @@ class OssIndexAuditPluginTests extends Specification {
                 id 'net.ossindex.audit'
                 id 'java'
             }
-            
+
             repositories {
                 mavenCentral()
             }
-            
+
             dependencies {
                 compile 'org.grails:grails:2.0.1'
                 compile 'com.squareup.okhttp3:mockwebserver:3.7.0'
             }
-            
+
             audit {
                 ignore = [ 'org.grails:grails' ]
             }
@@ -196,6 +197,63 @@ class OssIndexAuditPluginTests extends Specification {
         result.task(":audit").outcome.is(FAILED)
         // This is only valid so long as no new vulnerabilities are found in these packages.
         result.output.contains("2 unignored (of 10 total) vulnerabilities found")
+    }
+
+    def "a project with no dependencies and a junitReport element should not fail"() {
+        given: "A project with no dependencies"
+        buildFile << """
+            plugins {
+                id 'net.ossindex.audit'
+                id 'java'
+            }
+            
+            audit {
+                junitReport = './junitReport.xml'
+            }
+        """
+
+        when:
+        def result = GradleRunner.create()
+                .withProjectDir(testProjectDir.root)
+                .withArguments("audit")
+                .withPluginClasspath()
+                .build()
+
+        then:
+        result.task(":audit").outcome.is(SUCCESS)
+    }
+
+    def "a project with vulnerable dependencies and a junitReport element should fail"() {
+        given: "A project with vulnerable dependencies"
+        buildFile << """
+            plugins {
+                id 'net.ossindex.audit'
+                id 'java'
+            }
+            
+            repositories {
+                mavenCentral()
+            }
+            
+            dependencies {
+                compile 'org.grails:grails:2.0.1'
+            }
+            
+            audit {
+                junitReport = './junitReport.xml'
+            }
+        """
+
+        when:
+        def result = GradleRunner.create()
+                .withProjectDir(testProjectDir.root)
+                .withArguments("audit")
+                .withPluginClasspath()
+                .buildAndFail()
+
+        then:
+        result.task(":audit").outcome.is(FAILED)
+        result.output.contains("vulnerabilities found")
     }
 }
 

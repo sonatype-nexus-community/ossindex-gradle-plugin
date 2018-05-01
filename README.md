@@ -102,10 +102,57 @@ If the `--info` flag is provided to gradle it will output a dependency tree whic
 
 ![Tree](docs/Tree.PNG)
 
-Report output
+## Reporting in a Jenkins Pipeline
 -------------
 
-TODO
+The gradle plugin supports writing out test reports in the correct XML format for the
+[Jenkins JUnit Reporting Plugin](https://wiki.jenkins.io/display/JENKINS/JUnit+Plugin).
+To switch on this reporting, set the path to the report in you project's build.gradle file using the **"junitReport"** element like so:
+
+```
+audit {
+        failOnError = false
+        ignore = [ 'ch.qos.logback:logback-core' ]        ]
+        junitReport = "./ossindex/junitReport.xml"
+    }
+```
+
+This would create the file in an /ossindex folder in the project root.
+
+To access this using the JUnit plugin in a Jenkins pipeline:
+
+```
+    stages {
+
+        stage('OSSIndex Scan') {
+            steps {
+                sh "./gradlew --no-daemon audit"
+            }
+            post {
+                always {
+                    sh "touch ./ossindex/junitReport.xml"
+                    junit '**/ossindex/junitReport.xml'
+                }
+            }
+        }
+
+    }
+```
+
+NOTE: The junit plugin uses a slightly different syntax to reference the path.
+The touch command is there to get around the junit plugin complaining that the file
+was too old when developing this feature. You probably won't need it, but it is included here for reference.
+
+The example code creates a stage in the pipeline, best put between checkout and compile, to run the ossindex
+scan and then run the reporting plugin.
+
+### Stages
+
+![Typical Pipeline Stage](https://github.com/museadmin/ossindex-gradle-plugin/blob/simple-junit-xml-format-normalisation/docs/pipeline_stages.png)
+
+### Report Output
+
+![Typical Report](https://github.com/museadmin/ossindex-gradle-plugin/blob/simple-junit-xml-format-normalisation/docs/example_report.png)
 
 Disable fail on error
 ------------------------
