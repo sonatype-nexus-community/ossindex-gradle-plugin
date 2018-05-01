@@ -52,7 +52,7 @@ public class OssIndexPlugin implements Plugin<Project> {
         instanceId += 1;
         this.project = project;
 
-        project.getExtensions().create("audit", AuditExtensions.class);
+        project.getExtensions().create("audit", AuditExtensions.class, project);
         Task audit = project.task("audit");
         Proxy proxy = getProxy(project, "http");
 
@@ -89,7 +89,9 @@ public class OssIndexPlugin implements Plugin<Project> {
 
         ArtifactGatherer gatherer = factory.getGatherer();
         Set<GradleArtifact> gradleArtifacts = gatherer != null ? gatherer.gatherResolvedArtifacts(task.getProject()) : null;
-        DependencyAuditor auditor = factory.getDependencyAuditor(gradleArtifacts, proxies);
+
+        AuditExtensions auditConfig = getAuditExtensions(task.getProject());
+        DependencyAuditor auditor = factory.getDependencyAuditor(auditConfig, gradleArtifacts, proxies);
 
         AuditResultReporter reporter = new AuditResultReporter(gradleArtifacts,
             getAuditExtensions(task.getProject()),
@@ -108,7 +110,7 @@ public class OssIndexPlugin implements Plugin<Project> {
                 throw e;
             }
         } finally {
-            PackageTreeReporter treeReporter = new PackageTreeReporter(getAuditExtensions(task.getProject()));
+            PackageTreeReporter treeReporter = new PackageTreeReporter(auditConfig);
             treeReporter.reportDependencyTree(gradleArtifacts, packagesWithVulnerabilities);
             if ((instanceId -= 1) == 0 && junitReport != null) {
                 try {

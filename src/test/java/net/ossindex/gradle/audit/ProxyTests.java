@@ -5,9 +5,6 @@ import java.lang.reflect.Method;
 import java.util.Collections;
 
 import net.ossindex.gradle.OssIndexPlugin;
-import net.ossindex.gradle.audit.AuditorFactory;
-import net.ossindex.gradle.audit.DependencyAuditor;
-import net.ossindex.gradle.audit.Proxy;
 import net.ossindex.gradle.input.ArtifactGatherer;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -15,6 +12,7 @@ import org.gradle.api.plugins.ExtensionContainer;
 import org.junit.Test;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -51,7 +49,7 @@ public class ProxyTests
     // Simulate the process the gradle runs
     runGradleSimulation(project, plugin);
 
-    verify(factory).getDependencyAuditor(Collections.EMPTY_SET, Collections.EMPTY_LIST);
+    verify(factory).getDependencyAuditor(null, Collections.EMPTY_SET, Collections.EMPTY_LIST);
   }
 
   /**
@@ -71,7 +69,7 @@ public class ProxyTests
     // Simulate the process the gradle runs
     runGradleSimulation(project, plugin);
 
-    verify(factory).getDependencyAuditor(Collections.EMPTY_SET, Collections.singletonList(getExpectedProxy("http")));
+    verify(factory).getDependencyAuditor(null, Collections.EMPTY_SET, Collections.singletonList(getExpectedProxy("http")));
   }
 
   /**
@@ -91,7 +89,7 @@ public class ProxyTests
     // Simulate the process the gradle runs
     runGradleSimulation(project, plugin);
 
-    verify(factory).getDependencyAuditor(Collections.EMPTY_SET, Collections.singletonList(getExpectedProxy("https")));
+    verify(factory).getDependencyAuditor(null, Collections.EMPTY_SET, Collections.singletonList(getExpectedProxy("https")));
   }
 
   /**
@@ -109,7 +107,7 @@ public class ProxyTests
     when(factory.getGatherer()).thenReturn(gatherer);
 
     DependencyAuditor auditor = mock(DependencyAuditor.class);
-    when(factory.getDependencyAuditor(any(), any())).thenReturn(auditor);
+    when(factory.getDependencyAuditor(eq(null), any(), any())).thenReturn(auditor);
     return factory;
   }
 

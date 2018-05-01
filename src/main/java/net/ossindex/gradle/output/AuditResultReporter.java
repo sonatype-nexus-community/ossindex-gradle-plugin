@@ -1,5 +1,6 @@
 package net.ossindex.gradle.output;
 
+import net.ossindex.common.VulnerabilityDescriptor;
 import net.ossindex.gradle.AuditExtensions;
 import net.ossindex.gradle.audit.MavenPackageDescriptor;
 import net.ossindex.gradle.input.GradleArtifact;
@@ -9,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -57,7 +59,13 @@ public class AuditResultReporter {
             }
             GradleArtifact importingGradleArtifact = findImportingArtifactFor(descriptor);
             reportVulnerableArtifact(importingGradleArtifact, descriptor);
-            reportIntroducedVulnerabilities(descriptor);
+            int actualVulnerabilities = reportIntroducedVulnerabilities(descriptor);
+
+            // We already calculated unignored vulnerabilities. We need to include unexcluded vulnerabilities since they
+            // are handled by the audit library.
+            int expectedVulnerabilities = descriptor.getVulnerabilityMatches();
+            int unExcludedVulnerabilities = expectedVulnerabilities - actualVulnerabilities;
+            unignoredVulnerabilities -= unExcludedVulnerabilities;
         }
 
         currentVulnerabilityTotals = String.format("%s unignored (of %s total) vulnerabilities found",
@@ -85,7 +93,9 @@ public class AuditResultReporter {
 
     private void reportIntroducedVulnerabilities(MavenPackageDescriptor descriptor) {
         currentVulnerabilityList.clear();
-        descriptor.getVulnerabilities().forEach(v -> reportVulnerability(String.format("=> %s (see %s)", v.getTitle(), v.getUriString())));
+        List<VulnerabilityDescriptor> vulns = descriptor.getVulnerabilities();
+        vulns.forEach(v -> logger.error(String.format("=> %s (see %s)", v.getTitle(), v.getUriString())));
+        return vulns.size();
     }
 
     private void reportVulnerability(String line) {
