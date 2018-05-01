@@ -91,7 +91,7 @@ public class AuditResultReporter {
         logger.error(currentVulnerableArtifact);
     }
 
-    private void reportIntroducedVulnerabilities(MavenPackageDescriptor descriptor) {
+    private int reportIntroducedVulnerabilities(MavenPackageDescriptor descriptor) {
         currentVulnerabilityList.clear();
         List<VulnerabilityDescriptor> vulns = descriptor.getVulnerabilities();
         vulns.forEach(v -> logger.error(String.format("=> %s (see %s)", v.getTitle(), v.getUriString())));
