@@ -60,8 +60,10 @@ public class JunitXmlReportWriter {
         addElementAttribute(testCase, "id", instanceId.toString());
 
         if (artifact != null) {
-            Element failure = addChildElement(testCase, "failure", buildFailureString(currentVulnerabilityList));
-            addElementAttribute(failure, "message", artifact);
+            if (! artifact.substring(0, 1).equals("0")) {
+                Element failure = addChildElement(testCase, "failure", buildFailureString(currentVulnerabilityList));
+                addElementAttribute(failure, "message", artifact);
+            }
         }
     }
 
