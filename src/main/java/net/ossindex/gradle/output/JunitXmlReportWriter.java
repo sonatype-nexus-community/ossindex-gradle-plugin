@@ -28,6 +28,7 @@ public class JunitXmlReportWriter {
     private DocumentBuilder docBuilder;
     private DocumentBuilderFactory docFactory;
     private Element testSuite;
+    private Long startSeconds = null;
 
     public JunitXmlReportWriter() {
 
@@ -52,12 +53,18 @@ public class JunitXmlReportWriter {
         addElementAttribute(testSuite, "name", "OSSIndex");
     }
 
+    public void setStartTime() {
+        startSeconds = java.time.Instant.now().getEpochSecond();
+    }
+
     public void updateJunitReport(String totals, String task, Integer instanceId, String artifact, ArrayList<String> currentVulnerabilityList) {
 
         // Change to empty string for text, add name tag set to
         Element testCase = addChildElement(testSuite, "testcase", "");
         addElementAttribute(testCase, "name", task + " - " + totals);
         addElementAttribute(testCase, "id", instanceId.toString());
+        Long elapsedTime = java.time.Instant.now().getEpochSecond() - startSeconds;
+        addElementAttribute(testCase, "time", elapsedTime.toString());
 
         if (artifact != null) {
             if (! artifact.substring(0, 1).equals("0")) {
