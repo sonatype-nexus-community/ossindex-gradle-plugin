@@ -57,15 +57,23 @@ public class AuditResultReporter {
                 logger.info(descriptor.getMavenVersionId() + " is ignored due to settings");
                 continue;
             }
-            GradleArtifact importingGradleArtifact = findImportingArtifactFor(descriptor);
-            reportVulnerableArtifact(importingGradleArtifact, descriptor);
-            int actualVulnerabilities = reportIntroducedVulnerabilities(descriptor);
 
             // We already calculated unignored vulnerabilities. We need to include unexcluded vulnerabilities since they
             // are handled by the audit library.
+            int actualVulnerabilities = descriptor.getVulnerabilities().size();
             int expectedVulnerabilities = descriptor.getVulnerabilityMatches();
             int unExcludedVulnerabilities = expectedVulnerabilities - actualVulnerabilities;
             unignoredVulnerabilities -= unExcludedVulnerabilities;
+
+            // Now bail if exclusions cause all issues in this package to be ignored
+            if (actualVulnerabilities == 0) {
+                logger.info("Vulnerabilities in " + descriptor.getMavenVersionId() + " are excluded due to settings");
+                continue;
+            }
+
+            GradleArtifact importingGradleArtifact = findImportingArtifactFor(descriptor);
+            reportVulnerableArtifact(importingGradleArtifact, descriptor);
+            reportIntroducedVulnerabilities(descriptor);
         }
 
         currentVulnerabilityTotals = String.format("%s unignored (of %s total) vulnerabilities found",

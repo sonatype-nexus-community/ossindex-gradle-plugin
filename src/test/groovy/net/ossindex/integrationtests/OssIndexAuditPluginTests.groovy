@@ -197,6 +197,8 @@ class OssIndexAuditPluginTests extends Specification {
         result.task(":audit").outcome.is(FAILED)
         // This is only valid so long as no new vulnerabilities are found in these packages.
         result.output.contains("2 unignored (of 10 total) vulnerabilities found")
+        result.output.contains("which has 2 vulnerabilities")
+        !result.output.contains("which has 8 vulnerabilities")
     }
 
     def "a project with no dependencies and a junitReport element should not fail"() {

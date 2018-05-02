@@ -54,6 +54,8 @@ class ExclusionTests extends Specification
 
     then:
       result.task(":audit").outcome.is(FAILED)
+      result.output.contains("which has 8 vulnerabilities")
+      !result.output.contains("which has 2 vulnerabilities")
       result.output.contains("8 unignored (of 10 total) vulnerabilities found")
   }
 
