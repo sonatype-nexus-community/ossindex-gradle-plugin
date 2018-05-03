@@ -81,6 +81,7 @@ public class OssIndexPlugin implements Plugin<Project> {
     }
 
     private void doAudit(Task task) {
+        junitXmlReportWriter.setStartTime();
 
         if (this.settings == null) {
             this.settings = getAuditExtensions(task.getProject());
