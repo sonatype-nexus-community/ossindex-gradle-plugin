@@ -28,11 +28,10 @@ public class OssIndexPlugin implements Plugin<Project> {
     public static Integer instanceId = null;
 
     private static AuditExtensions settings = null;
-
     private static final Logger logger = LoggerFactory.getLogger(OssIndexPlugin.class);
     private List<Proxy> proxies = new LinkedList<>();
-
     private AuditorFactory factory = new AuditorFactory();
+    private Boolean hasFailedOnError = false;
 
     public void setAuditorFactory(AuditorFactory factory) {
         this.factory = factory;
@@ -107,12 +106,13 @@ public class OssIndexPlugin implements Plugin<Project> {
             reporter.reportResult(packagesWithVulnerabilities);
         } catch (GradleException e) {
             if (shouldFailOnError(task.getProject())) {
+                hasFailedOnError= true;
                 throw e;
             }
         } finally {
             PackageTreeReporter treeReporter = new PackageTreeReporter(getAuditExtensions(task.getProject()));
             treeReporter.reportDependencyTree(gradleArtifacts, packagesWithVulnerabilities);
-            if ((instanceId -= 1) == 0 && junitReport != null) {
+            if (((instanceId -= 1) == 0 || hasFailedOnError) && junitReport != null) {
                 try {
                     System.out.println("Creating Junit Report");
                     junitXmlReportWriter.writeXmlReport(junitReport);
