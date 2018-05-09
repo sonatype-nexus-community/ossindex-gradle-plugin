@@ -117,7 +117,6 @@ public class OssIndexPlugin implements Plugin<Project> {
         } finally {
             PackageTreeReporter treeReporter = new PackageTreeReporter(auditConfig);
             treeReporter.reportDependencyTree(gradleArtifacts, packagesWithVulnerabilities);
-            System.out.println("Instance ID = " + instanceId.toString());
             if (((instanceId -= 1) == 0 || hasFailedOnError) && junitReport != null) {
                 try {
                     System.out.println("Creating Junit Report");
