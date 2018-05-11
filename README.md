@@ -123,19 +123,18 @@ To access this using the JUnit plugin in a Jenkins pipeline:
 
 ```
     stages {
-
         stage('OSSIndex Scan') {
             steps {
-                sh "./gradlew --no-daemon audit"
+                sh "./gradlew --no-daemon --stacktrace audit"
             }
             post {
                 always {
                     sh "touch ./ossindex/junitReport.xml"
                     junit '**/ossindex/junitReport.xml'
+                    sh "[[ ! \$(grep '<failure' ./ossindex/junitReport.xml) ]]"
                 }
             }
         }
-
     }
 ```
 
@@ -145,6 +144,19 @@ was too old when developing this feature. You probably won't need it, but it is 
 
 The example code creates a stage in the pipeline, best put between checkout and compile, to run the ossindex
 scan and then run the reporting plugin.
+
+The line:
+```
+    sh "grep failure ./ossindex/junitReport.xml >/dev/null && exit 1"
+```
+
+Ensures that the build fails if any failures are reported. Use this instead of setting -
+
+```
+    failOnError = true
+```
+
+As failOnError will cause the scan to exit on the first failure.
 
 ### Stages
 
