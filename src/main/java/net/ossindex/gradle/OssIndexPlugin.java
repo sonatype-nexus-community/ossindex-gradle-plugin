@@ -23,20 +23,35 @@ import java.util.Set;
 
 public class OssIndexPlugin implements Plugin<Project> {
 
-    private JunitXmlReportWriter junitXmlReportWriter = new JunitXmlReportWriter();
-    public static String junitReport = null;
+    public static JunitXmlReportWriter junitXmlReportWriter = null;
+
+    public static Integer instanceId = null;
 
     private static AuditExtensions settings = null;
+
+    private Boolean hasFailedOnError = false;
+
     private static final Logger logger = LoggerFactory.getLogger(OssIndexPlugin.class);
     private List<Proxy> proxies = new LinkedList<>();
-    private Project project = null;
+
     private AuditorFactory factory = new AuditorFactory();
+
     public void setAuditorFactory(AuditorFactory factory) {
         this.factory = factory;
+    }
+    private Project project = null;
+
+    public OssIndexPlugin() {
+        if (this.junitXmlReportWriter == null) {
+            this.junitXmlReportWriter = new JunitXmlReportWriter();
+        }
+
+        if (this.instanceId == null) { instanceId = 0; }
     }
 
     @Override
     public void apply(Project project) {
+        instanceId += 1;
         this.project = project;
 
         project.getExtensions().create("audit", AuditExtensions.class, project);
@@ -68,14 +83,13 @@ public class OssIndexPlugin implements Plugin<Project> {
     }
 
     private void doAudit(Task task) {
-
+        junitXmlReportWriter.setStartTime();
 
         if (this.settings == null) {
             this.settings = getAuditExtensions(task.getProject());
-            // Mocked tests may not have settings
-            junitReport = settings != null ? settings.junitReport : null;
         }
-        junitXmlReportWriter.init(settings.junitReport);
+        // Mocked tests may not have settings
+        String junitReport = settings != null ? settings.junitReport : null;
 
         ArtifactGatherer gatherer = factory.getGatherer();
         Set<GradleArtifact> gradleArtifacts = gatherer != null ? gatherer.gatherResolvedArtifacts(task.getProject()) : null;
@@ -83,9 +97,9 @@ public class OssIndexPlugin implements Plugin<Project> {
         AuditExtensions auditConfig = getAuditExtensions(task.getProject());
         DependencyAuditor auditor = factory.getDependencyAuditor(auditConfig, gradleArtifacts, proxies);
 
-        String tmpTask = project.getDisplayName().split(" ")[1].replaceAll("\'","") + ":audit";
         AuditResultReporter reporter = new AuditResultReporter(gradleArtifacts,
             getAuditExtensions(task.getProject()),
+            instanceId,
             junitXmlReportWriter,
             project.getDisplayName().split(" ")[1].replaceAll("\'","") + ":audit");
 
@@ -97,13 +111,15 @@ public class OssIndexPlugin implements Plugin<Project> {
             reporter.reportResult(packagesWithVulnerabilities);
         } catch (GradleException e) {
             if (shouldFailOnError(task.getProject())) {
+                hasFailedOnError= true;
                 throw e;
             }
         } finally {
             PackageTreeReporter treeReporter = new PackageTreeReporter(auditConfig);
             treeReporter.reportDependencyTree(gradleArtifacts, packagesWithVulnerabilities);
-            if (junitReport != null) {
+            if (((instanceId -= 1) == 0 || hasFailedOnError) && junitReport != null) {
                 try {
+                    System.out.println("Creating Junit Report");
                     junitXmlReportWriter.writeXmlReport(junitReport);
                     junitXmlReportWriter = null;
                 } catch (Exception e) {
@@ -115,6 +131,7 @@ public class OssIndexPlugin implements Plugin<Project> {
 
     private boolean shouldFailOnError(Project project) {
         return getAuditExtensions(project).failOnError;
+
     }
 
     private AuditExtensions getAuditExtensions(Project project) {

@@ -1,12 +1,14 @@
 package net.ossindex.gradle;
 
-import groovy.lang.Closure;
-import net.ossindex.gradle.audit.MavenPackageDescriptor;
-import org.gradle.api.Project;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import javax.inject.Inject;
+
+import groovy.lang.Closure;
+import net.ossindex.gradle.audit.MavenPackageDescriptor;
+import org.gradle.api.Project;
 
 public class AuditExtensions
 {
