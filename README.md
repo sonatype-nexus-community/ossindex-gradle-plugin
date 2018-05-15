@@ -122,41 +122,41 @@ This would create the file in an /ossindex folder in the project root.
 To access this using the JUnit plugin in a Jenkins pipeline:
 
 ```
-    stages {
-        stage('OSSIndex Scan') {
-            steps {
-                sh "./gradlew --no-daemon --stacktrace audit"
-            }
-            post {
-                always {
-                    sh "touch ./ossindex/junitReport.xml"
-                    junit '**/ossindex/junitReport.xml'
-                    sh "[[ ! \$(grep '<failure' ./ossindex/junitReport.xml) ]]"
-                }
+    stage('OSSIndex Scan') {
+        steps {
+            // Zero or create report
+            sh ":> ./ossindex/junitReport.xml"
+            // Run the audit
+            sh "./gradlew --no-daemon --stacktrace audit"
+        }
+        post {
+            always {
+                // Tell junit plugin to use report
+                junit '**/ossindex/junitReport.xml'
+                // Fail stage if '<failure' found in report
+                sh "[[ ! \$(grep '<failure' ./ossindex/junitReport.xml) ]]"
             }
         }
     }
 ```
 
 NOTE: The junit plugin uses a slightly different syntax to reference the path.
-The touch command is there to get around the junit plugin complaining that the file
-was too old when developing this feature. You probably won't need it, but it is included here for reference.
 
 The example code creates a stage in the pipeline, best put between checkout and compile, to run the ossindex
 scan and then run the reporting plugin.
 
 The line:
 ```
-    sh "grep failure ./ossindex/junitReport.xml >/dev/null && exit 1"
+    sh "[[ ! \$(grep '<failure' ./ossindex/junitReport.xml) ]]"
 ```
 
-Ensures that the build fails if any failures are reported. Use this instead of setting -
+Ensures that the build fails if any failures are reported.
 
+Set
 ```
-    failOnError = true
+    failOnError = false
 ```
-
-As failOnError will cause the scan to exit on the first failure.
+As failOnError is true by default and will cause the scan to exit on the first failure, instead of finding them all.
 
 ### Stages
 
