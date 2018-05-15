@@ -68,15 +68,13 @@ public class OssIndexPlugin implements Plugin<Project> {
     }
 
     private void doAudit(Task task) {
-
-
         if (this.settings == null) {
             this.settings = getAuditExtensions(task.getProject());
-            // Mocked tests may not have settings
-            junitReport = settings != null ? settings.junitReport : null;
         }
+        // Mocked tests may not have settings
+        junitReport = settings != null ? settings.junitReport : null;
         if (settings != null) {
-            junitXmlReportWriter.init(settings.junitReport);
+            junitXmlReportWriter.init(junitReport);
         }
 
         ArtifactGatherer gatherer = factory.getGatherer();

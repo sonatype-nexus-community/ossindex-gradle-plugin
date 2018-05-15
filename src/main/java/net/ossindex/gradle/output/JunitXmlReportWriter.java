@@ -27,6 +27,7 @@ import java.util.Set;
 public class JunitXmlReportWriter {
 
     public Integer testCaseId = 0;
+    private boolean skip = false;
     private Document doc;
     private DocumentBuilder docBuilder;
     private DocumentBuilderFactory docFactory;
@@ -35,7 +36,10 @@ public class JunitXmlReportWriter {
 
     public void init(String junitReport) {
 
-        if (junitReport == null) { return; }
+        if (junitReport == null) {
+            skip = true;
+            return;
+        }
 
         docFactory = DocumentBuilderFactory.newInstance();
         try {
@@ -81,6 +85,10 @@ public class JunitXmlReportWriter {
 
     public void updateJunitReport(String totals, String task, String artifact, ArrayList<String> currentVulnerabilityList) {
 
+        if (skip) {
+            return;
+        }
+
         // Change to empty string for text, add name tag set to
         Element testCase = addChildElement(testSuite, "testcase", "");
         addElementAttribute(testCase, "name", task + " - " + totals);
@@ -97,6 +105,9 @@ public class JunitXmlReportWriter {
     }
 
     public void writeXmlReport(String pathToReport) throws Exception {
+        if (skip) {
+            return;
+        }
 
         String testCount = getTotalOfElementsByName("testcase").toString();
         modifyElementAttribute("testsuites", 0, "tests", testCount);
