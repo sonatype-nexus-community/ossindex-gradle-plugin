@@ -75,7 +75,9 @@ public class OssIndexPlugin implements Plugin<Project> {
             // Mocked tests may not have settings
             junitReport = settings != null ? settings.junitReport : null;
         }
-        junitXmlReportWriter.init(settings.junitReport);
+        if (settings != null) {
+            junitXmlReportWriter.init(settings.junitReport);
+        }
 
         ArtifactGatherer gatherer = factory.getGatherer();
         Set<GradleArtifact> gradleArtifacts = gatherer != null ? gatherer.gatherResolvedArtifacts(task.getProject()) : null;
