@@ -26,17 +26,13 @@ public class AuditResultReporter {
 
     private JunitXmlReportWriter junitXmlReportWriter;
 
-    private Integer instanceId;
-
     public AuditResultReporter(Set<GradleArtifact> resolvedTopLevelArtifacts,
                                AuditExtensions settings,
-                               Integer instanceId,
                                JunitXmlReportWriter junitXmlReportWriter,
                                String thisTask) {
         this.resolvedTopLevelArtifacts = resolvedTopLevelArtifacts;
         this.settings = settings;
         this.junitXmlReportWriter = junitXmlReportWriter;
-        this.instanceId = instanceId;
         this.thisTask = thisTask;
     }
 
@@ -84,7 +80,6 @@ public class AuditResultReporter {
         // Update the JUnit plugin XML report object
         junitXmlReportWriter.updateJunitReport(currentVulnerabilityTotals,
             thisTask,
-            instanceId,
             currentVulnerableArtifact,
             currentVulnerabilityList);
 
@@ -102,7 +97,7 @@ public class AuditResultReporter {
     private int reportIntroducedVulnerabilities(MavenPackageDescriptor descriptor) {
         currentVulnerabilityList.clear();
         List<VulnerabilityDescriptor> vulns = descriptor.getVulnerabilities();
-        vulns.forEach(v -> logger.error(String.format("=> %s (see %s)", v.getTitle(), v.getUriString())));
+        vulns.forEach(v -> reportVulnerability(String.format("=> %s (see %s)", v.getTitle(), v.getUriString())));
         return vulns.size();
     }
 
