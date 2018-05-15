@@ -5,6 +5,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -15,6 +16,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Paths;
@@ -24,13 +26,16 @@ import java.util.Set;
 
 public class JunitXmlReportWriter {
 
+    public Integer testCaseId = 0;
     private Document doc;
     private DocumentBuilder docBuilder;
     private DocumentBuilderFactory docFactory;
     private Element testSuite;
     private Long startSeconds = null;
 
-    public JunitXmlReportWriter() {
+    public void init(String junitReport) {
+
+        if (junitReport == null) { return; }
 
         docFactory = DocumentBuilderFactory.newInstance();
         try {
@@ -40,29 +45,46 @@ public class JunitXmlReportWriter {
             System.exit(1);
         }
 
-        doc = docBuilder.newDocument();
-        Element rootElement = doc.createElement("testsuites");
-        doc.appendChild(rootElement);
-        addElementAttribute(rootElement, "id", "1");
-        addElementAttribute(rootElement, "failures", "0");
-        addElementAttribute(rootElement, "tests", "0");
+        // If report exists then we update it
+        // else we create a new report
+        Element rootElement = null;
+        File f = new File(junitReport);
+        if(f.exists() && !f.isDirectory()) {
+            try {
+                doc = docBuilder.parse(junitReport);
+            } catch (SAXException | IOException e) {
+                e.printStackTrace();
+                System.exit(1);
+            }
+            testSuite = (Element)doc.getElementsByTagName("testsuite").item(0);
+            testCaseId = getTotalOfElementsByName("testcase");
+        } else {
+            doc = docBuilder.newDocument();
+            rootElement = doc.createElement("testsuites");
+            doc.appendChild(rootElement);
+            addElementAttribute(rootElement, "id", "1");
+            addElementAttribute(rootElement, "failures", "0");
+            addElementAttribute(rootElement, "tests", "0");
+            // Top level test suite
+            testSuite = addChildElement(rootElement,"testsuite", "");
+            addElementAttribute(testSuite, "id", "1");
+            addElementAttribute(testSuite, "name", "OSSIndex");
+        }
 
-        // Top level test suite
-        testSuite = addChildElement(rootElement,"testsuite", "");
-        addElementAttribute(testSuite, "id", "1");
-        addElementAttribute(testSuite, "name", "OSSIndex");
+        // Metrics
+        setStartTime();
     }
 
     public void setStartTime() {
         startSeconds = java.time.Instant.now().getEpochSecond();
     }
 
-    public void updateJunitReport(String totals, String task, Integer instanceId, String artifact, ArrayList<String> currentVulnerabilityList) {
+    public void updateJunitReport(String totals, String task, String artifact, ArrayList<String> currentVulnerabilityList) {
 
         // Change to empty string for text, add name tag set to
         Element testCase = addChildElement(testSuite, "testcase", "");
         addElementAttribute(testCase, "name", task + " - " + totals);
-        addElementAttribute(testCase, "id", instanceId.toString());
+        addElementAttribute(testCase, "id", (testCaseId += 1).toString());
         Long elapsedTime = java.time.Instant.now().getEpochSecond() - startSeconds;
         addElementAttribute(testCase, "time", elapsedTime.toString());
 
@@ -140,6 +162,5 @@ public class JunitXmlReportWriter {
         }
         return false;
     }
-
 }
 
