@@ -34,6 +34,9 @@ public class JunitXmlReportWriter {
     private Element testSuite;
     private Long startSeconds = null;
 
+    // Object used for document/file locking.
+    private static final Object fileLock = new Object();
+
     public void init(String junitReport) {
 
         if (junitReport == null) {
@@ -51,28 +54,32 @@ public class JunitXmlReportWriter {
 
         // If report exists then we update it
         // else we create a new report
-        Element rootElement = null;
-        File f = new File(junitReport);
-        if(f.exists() && !f.isDirectory()) {
-            try {
-                doc = docBuilder.parse(junitReport);
-            } catch (SAXException | IOException e) {
-                e.printStackTrace();
-                System.exit(1);
+        synchronized (fileLock) { // Make sure we are not reading and writing at the same time
+            Element rootElement = null;
+            File f = new File(junitReport);
+            if (f.exists() && !f.isDirectory()) {
+                try {
+                    doc = docBuilder.parse(junitReport);
+                }
+                catch (SAXException | IOException e) {
+                    e.printStackTrace();
+                    System.exit(1);
+                }
+                testSuite = (Element) doc.getElementsByTagName("testsuite").item(0);
+                testCaseId = getTotalOfElementsByName("testcase");
             }
-            testSuite = (Element)doc.getElementsByTagName("testsuite").item(0);
-            testCaseId = getTotalOfElementsByName("testcase");
-        } else {
-            doc = docBuilder.newDocument();
-            rootElement = doc.createElement("testsuites");
-            doc.appendChild(rootElement);
-            addElementAttribute(rootElement, "id", "1");
-            addElementAttribute(rootElement, "failures", "0");
-            addElementAttribute(rootElement, "tests", "0");
-            // Top level test suite
-            testSuite = addChildElement(rootElement,"testsuite", "");
-            addElementAttribute(testSuite, "id", "1");
-            addElementAttribute(testSuite, "name", "OSSIndex");
+            else {
+                doc = docBuilder.newDocument();
+                rootElement = doc.createElement("testsuites");
+                doc.appendChild(rootElement);
+                addElementAttribute(rootElement, "id", "1");
+                addElementAttribute(rootElement, "failures", "0");
+                addElementAttribute(rootElement, "tests", "0");
+                // Top level test suite
+                testSuite = addChildElement(rootElement, "testsuite", "");
+                addElementAttribute(testSuite, "id", "1");
+                addElementAttribute(testSuite, "name", "OSSIndex");
+            }
         }
 
         // Metrics
@@ -115,15 +122,17 @@ public class JunitXmlReportWriter {
         modifyElementAttribute("testsuites", 0, "failures", failureCount);
 
         if(parentDirIsWritable(pathToReport)) {
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            Transformer transformer = transformerFactory.newTransformer();
-            DOMSource source = new DOMSource(doc);
-            StreamResult result = new StreamResult(new File(pathToReport));
+            synchronized (fileLock) {// Make sure we are not reading and writing at the same time
+                TransformerFactory transformerFactory = TransformerFactory.newInstance();
+                Transformer transformer = transformerFactory.newTransformer();
+                DOMSource source = new DOMSource(doc);
+                StreamResult result = new StreamResult(new File(pathToReport));
 
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+                transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+                transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
 
-            transformer.transform(source, result);
+                transformer.transform(source, result);
+            }
         } else {
             throw new java.io.IOException("Report (" + pathToReport + ") failed permissions check.");
         }
