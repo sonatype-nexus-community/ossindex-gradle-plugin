@@ -124,8 +124,6 @@ To access this using the JUnit plugin in a Jenkins pipeline:
 ```
     stage('OSSIndex Scan') {
         steps {
-            // Zero or create report
-            sh ":> ./ossindex/junitReport.xml"
             // Run the audit
             sh "./gradlew --no-daemon --stacktrace audit"
         }
