@@ -254,4 +254,40 @@ class ExclusionTests extends Specification
       // This is only valid so long as no new vulnerabilities are found in these packages.
       result.output.contains("9 unignored (of 10 total) vulnerabilities found")
   }
+
+  def "Ignore all vulnerabilities by versionless path"() {
+    given: "A project with 2 vulnerable artifacts, excluding a parent of a vulnerable package"
+      buildFile << """
+            plugins {
+                id 'net.ossindex.audit'
+                id 'java'
+            }
+
+            repositories {
+                mavenCentral()
+            }
+
+            dependencies {
+                compile 'com.squareup.okhttp3:mockwebserver:3.7.0'
+            }
+
+            audit {
+                exclusion {
+                    packages = [ 'com.squareup.okhttp3:mockwebserver', 'org.bouncycastle:bcprov-jdk15on' ]
+                }
+            }
+        """
+
+    when:
+      def result = GradleRunner.create()
+          .withProjectDir(testProjectDir.root)
+          .withArguments("audit")
+          .withPluginClasspath()
+          .build()
+
+    then:
+      result.task(":audit").outcome.is(SUCCESS)
+      // This is only valid so long as no new vulnerabilities are found in these packages.
+      result.output.contains("0 unignored (of 2 total) vulnerabilities found")
+  }
 }

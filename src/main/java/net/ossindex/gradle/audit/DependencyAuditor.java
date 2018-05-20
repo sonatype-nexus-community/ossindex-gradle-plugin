@@ -44,7 +44,7 @@ public class DependencyAuditor
                            final List<Proxy> proxies)
   {
     for (Proxy proxy : proxies) {
-      logger.error("Using proxy: " + proxy);
+      logger.info("Using proxy: " + proxy);
       OssIndexApi.addProxy(proxy.getScheme(), proxy.getHost(), proxy.getPort(), proxy.getUser(), proxy.getPassword());
     }
     request = OssIndexApi.createPackageRequest();

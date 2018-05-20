@@ -69,4 +69,12 @@ public class AuditExclusion
     }
     return null;
   }
+
+  @Override
+  public String toString() {
+    return "AuditExclusion{" +
+        "vid='" + vid + '\'' +
+        ", packages=" + packages +
+        '}';
+  }
 }
