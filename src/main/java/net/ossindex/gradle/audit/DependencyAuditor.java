@@ -35,6 +35,8 @@ public class DependencyAuditor
 {
   private static final Logger logger = LoggerFactory.getLogger(DependencyAuditor.class);
 
+  private final AuditExtensions config;
+
   private Map<PackageDescriptor, PackageDescriptor> parents = new HashMap<>();
 
   private IPackageRequest request;
@@ -43,20 +45,32 @@ public class DependencyAuditor
                            Set<GradleArtifact> gradleArtifacts,
                            final List<Proxy> proxies)
   {
+    this.config =  auditConfig;
     for (Proxy proxy : proxies) {
       logger.info("Using proxy: " + proxy);
       OssIndexApi.addProxy(proxy.getScheme(), proxy.getHost(), proxy.getPort(), proxy.getUser(), proxy.getPassword());
     }
+
+    logger.debug("FILTERDBG [" + this.hashCode() + "]: Create request");
+
     request = OssIndexApi.createPackageRequest();
-    configure(auditConfig);
+    configure();
     addArtifactsToAudit(gradleArtifacts);
   }
 
-  private void configure(final AuditExtensions config) {
+  private void configure() {
     if (config != null) {
       IVulnerabilityFilter filter = VulnerabilityFilterFactory.getInstance().createVulnerabilityFilter();
       Collection<AuditExclusion> exclusions = config.getExclusions();
+      if (exclusions != null) {
+        logger.debug("FILTERDBG [" + this.hashCode() + "]: Adding exclusions " + exclusions.size());
+      } else {
+        logger.debug("FILTERDBG [" + this.hashCode() + "]: No exclusions");
+      }
       for (AuditExclusion exclusion : exclusions) {
+        if (exclusion.hasVid("366734") || exclusion.hasPackage("scot.disclosure:aps-unit-test-utils")) {
+          logger.debug("FILTERDBG [" + this.hashCode() + "]: add exclusion " + exclusion);
+        }
         exclusion.apply(filter);
       }
       request.addVulnerabilityFilter(filter);
@@ -64,6 +78,7 @@ public class DependencyAuditor
   }
 
   public Collection<MavenPackageDescriptor> runAudit() {
+    logger.debug("FILTERDBG [" + this.hashCode() + "]: Running audit");
     try {
       List<MavenPackageDescriptor> results = new LinkedList<>();
       Collection<PackageDescriptor> packages = request.run();

@@ -77,4 +77,22 @@ public class AuditExclusion
         ", packages=" + packages +
         '}';
   }
+
+  public boolean hasPackage(final String name) {
+    if (packages != null) {
+      for (String def : packages) {
+        if (def.startsWith(name)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public boolean hasVid(final String myVid) {
+    if (vid != null) {
+      return vid.equals(myVid);
+    }
+    return false;
+  }
 }
