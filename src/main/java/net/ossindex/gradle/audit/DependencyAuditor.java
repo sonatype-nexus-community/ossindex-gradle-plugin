@@ -51,7 +51,7 @@ public class DependencyAuditor
       OssIndexApi.addProxy(proxy.getScheme(), proxy.getHost(), proxy.getPort(), proxy.getUser(), proxy.getPassword());
     }
 
-    logger.debug("FILTERDBG [" + this.hashCode() + "]: Create request");
+    System.err.println("FILTERDBG [" + this.hashCode() + "]: Create request");
 
     request = OssIndexApi.createPackageRequest();
     configure();
@@ -63,13 +63,13 @@ public class DependencyAuditor
       IVulnerabilityFilter filter = VulnerabilityFilterFactory.getInstance().createVulnerabilityFilter();
       Collection<AuditExclusion> exclusions = config.getExclusions();
       if (exclusions != null) {
-        logger.debug("FILTERDBG [" + this.hashCode() + "]: Adding exclusions " + exclusions.size());
+        System.err.println("FILTERDBG [" + this.hashCode() + "]: Adding exclusions " + exclusions.size());
       } else {
-        logger.debug("FILTERDBG [" + this.hashCode() + "]: No exclusions");
+        System.err.println("FILTERDBG [" + this.hashCode() + "]: No exclusions");
       }
       for (AuditExclusion exclusion : exclusions) {
         if (exclusion.hasVid("366734") || exclusion.hasPackage("scot.disclosure:aps-unit-test-utils")) {
-          logger.debug("FILTERDBG [" + this.hashCode() + "]: add exclusion " + exclusion);
+          System.err.println("FILTERDBG [" + this.hashCode() + "]: add exclusion " + exclusion);
         }
         exclusion.apply(filter);
       }
@@ -78,7 +78,7 @@ public class DependencyAuditor
   }
 
   public Collection<MavenPackageDescriptor> runAudit() {
-    logger.debug("FILTERDBG [" + this.hashCode() + "]: Running audit");
+    System.err.println("FILTERDBG [" + this.hashCode() + "]: Running audit");
     try {
       List<MavenPackageDescriptor> results = new LinkedList<>();
       Collection<PackageDescriptor> packages = request.run();
