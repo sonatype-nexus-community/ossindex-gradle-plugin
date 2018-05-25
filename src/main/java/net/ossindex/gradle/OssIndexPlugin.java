@@ -68,6 +68,7 @@ public class OssIndexPlugin implements Plugin<Project> {
     }
 
     private void doAudit(Task task) {
+        System.err.println("FILTERDBG OssIndexPlugin[" + this.hashCode() + "]: doAudit " + task.getProject());
         if (this.settings == null) {
             this.settings = getAuditExtensions(task.getProject());
         }

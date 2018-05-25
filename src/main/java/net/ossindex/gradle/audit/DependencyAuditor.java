@@ -14,6 +14,7 @@ import net.ossindex.common.IPackageRequest;
 import net.ossindex.common.OssIndexApi;
 import net.ossindex.common.PackageCoordinate;
 import net.ossindex.common.PackageDescriptor;
+import net.ossindex.common.VulnerabilityDescriptor;
 import net.ossindex.common.filter.IVulnerabilityFilter;
 import net.ossindex.common.filter.VulnerabilityFilterFactory;
 import net.ossindex.gradle.AuditExclusion;
@@ -78,7 +79,7 @@ public class DependencyAuditor
   }
 
   public Collection<MavenPackageDescriptor> runAudit() {
-    System.err.println("FILTERDBG [" + this.hashCode() + "]: Running audit");
+    System.err.println("FILTERDBG [" + this.hashCode() + "]: Running audit on request " + request.hashCode());
     try {
       List<MavenPackageDescriptor> results = new LinkedList<>();
       Collection<PackageDescriptor> packages = request.run();
@@ -91,6 +92,11 @@ public class DependencyAuditor
           }
         }
         if (mvnPkg.getVulnerabilityMatches() > 0) {
+          System.err.println("FILTERDBG [" + this.hashCode() + "]: FOUND " + mvnPkg.getVulnerabilityMatches() + " vulns");
+          List<VulnerabilityDescriptor> vulns = mvnPkg.getVulnerabilities();
+          for (VulnerabilityDescriptor vuln: vulns) {
+            System.err.println("FILTERDBG [" + this.hashCode() + "]:   * vuln id " + vuln.getId());
+          }
           results.add(mvnPkg);
         }
       }
