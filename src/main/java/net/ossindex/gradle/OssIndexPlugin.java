@@ -36,7 +36,7 @@ public class OssIndexPlugin implements Plugin<Project> {
     }
 
     @Override
-    public void apply(Project project) {
+    public synchronized void apply(Project project) {
         this.project = project;
 
         project.getExtensions().create("audit", AuditExtensions.class, project);
@@ -67,8 +67,10 @@ public class OssIndexPlugin implements Plugin<Project> {
         }
     }
 
-    private void doAudit(Task task) {
-        System.err.println("FILTERDBG OssIndexPlugin[" + this.hashCode() + "]: doAudit " + task.getProject());
+    private synchronized void doAudit(Task task) {
+        if (DependencyAuditor.FILTERDBG) {
+            System.err.println("FILTERDBG OssIndexPlugin[" + this.hashCode() + "]: doAudit " + task.getProject());
+        }
         if (this.settings == null) {
             this.settings = getAuditExtensions(task.getProject());
         }

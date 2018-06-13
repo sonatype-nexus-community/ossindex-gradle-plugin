@@ -36,6 +36,8 @@ public class DependencyAuditor
 {
   private static final Logger logger = LoggerFactory.getLogger(DependencyAuditor.class);
 
+  public static final boolean FILTERDBG = false;
+
   private final AuditExtensions config;
 
   private Map<PackageDescriptor, PackageDescriptor> parents = new HashMap<>();
@@ -52,7 +54,9 @@ public class DependencyAuditor
       OssIndexApi.addProxy(proxy.getScheme(), proxy.getHost(), proxy.getPort(), proxy.getUser(), proxy.getPassword());
     }
 
-    System.err.println("FILTERDBG [" + this.hashCode() + "]: Create request");
+    if (FILTERDBG) {
+      System.err.println("FILTERDBG [" + this.hashCode() + "]: Create request");
+    }
 
     request = OssIndexApi.createPackageRequest();
     configure();
@@ -63,14 +67,19 @@ public class DependencyAuditor
     if (config != null) {
       IVulnerabilityFilter filter = VulnerabilityFilterFactory.getInstance().createVulnerabilityFilter();
       Collection<AuditExclusion> exclusions = config.getExclusions();
-      if (exclusions != null) {
-        System.err.println("FILTERDBG [" + this.hashCode() + "]: Adding exclusions " + exclusions.size());
-      } else {
-        System.err.println("FILTERDBG [" + this.hashCode() + "]: No exclusions");
+      if (FILTERDBG) {
+        if (exclusions != null) {
+          System.err.println("FILTERDBG [" + this.hashCode() + "]: Adding exclusions " + exclusions.size());
+        }
+        else {
+          System.err.println("FILTERDBG [" + this.hashCode() + "]: No exclusions");
+        }
       }
       for (AuditExclusion exclusion : exclusions) {
-        if (exclusion.hasVid("366734") || exclusion.hasPackage("scot.disclosure:aps-unit-test-utils")) {
-          System.err.println("FILTERDBG [" + this.hashCode() + "]: add exclusion " + exclusion);
+        if (FILTERDBG) {
+          if (exclusion.hasVid("366734") || exclusion.hasPackage("scot.disclosure:aps-unit-test-utils")) {
+            System.err.println("FILTERDBG [" + this.hashCode() + "]: add exclusion " + exclusion);
+          }
         }
         exclusion.apply(filter);
       }
@@ -79,7 +88,9 @@ public class DependencyAuditor
   }
 
   public Collection<MavenPackageDescriptor> runAudit() {
-    System.err.println("FILTERDBG [" + this.hashCode() + "]: Running audit on request " + request.hashCode());
+    if (FILTERDBG) {
+      System.err.println("FILTERDBG [" + this.hashCode() + "]: Running audit on request " + request.hashCode());
+    }
     try {
       List<MavenPackageDescriptor> results = new LinkedList<>();
       Collection<PackageDescriptor> packages = request.run();
@@ -92,10 +103,13 @@ public class DependencyAuditor
           }
         }
         if (mvnPkg.getVulnerabilityMatches() > 0) {
-          System.err.println("FILTERDBG [" + this.hashCode() + "]: FOUND " + mvnPkg.getVulnerabilityMatches() + " vulns");
-          List<VulnerabilityDescriptor> vulns = mvnPkg.getVulnerabilities();
-          for (VulnerabilityDescriptor vuln: vulns) {
-            System.err.println("FILTERDBG [" + this.hashCode() + "]:   * vuln id " + vuln.getId());
+          if (FILTERDBG) {
+            System.err
+                .println("FILTERDBG [" + this.hashCode() + "]: FOUND " + mvnPkg.getVulnerabilityMatches() + " vulns");
+            List<VulnerabilityDescriptor> vulns = mvnPkg.getVulnerabilities();
+            for (VulnerabilityDescriptor vuln : vulns) {
+              System.err.println("FILTERDBG [" + this.hashCode() + "]:   * vuln id " + vuln.getId());
+            }
           }
           results.add(mvnPkg);
         }
