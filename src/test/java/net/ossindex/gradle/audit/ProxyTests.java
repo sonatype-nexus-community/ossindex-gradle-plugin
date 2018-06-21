@@ -56,11 +56,11 @@ public class ProxyTests
    * Ensure that OssIndexPlugin properly assembles the proxy argument and passes it to the DependencyAuditor.
    */
   @Test
-  public void httpProxyTest() throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+  public void httpLocalProxyTest() throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
     Project project = mockProject();
 
     // Mock the proxy being provided as project properties
-    mockProxy(project, "http");
+    mockLocalProxy(project, "http");
 
     OssIndexPlugin plugin = new OssIndexPlugin();
     AuditorFactory factory = mockAuditorFactory();
@@ -76,11 +76,51 @@ public class ProxyTests
    * Ensure that OssIndexPlugin properly assembles the proxy argument and passes it to the DependencyAuditor.
    */
   @Test
-  public void httpsProxyTest() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+  public void httpsLocalProxyTest() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     Project project = mockProject();
 
     // Mock the proxy being provided as project properties
-    mockProxy(project, "https");
+    mockLocalProxy(project, "https");
+
+    OssIndexPlugin plugin = new OssIndexPlugin();
+    AuditorFactory factory = mockAuditorFactory();
+    plugin.setAuditorFactory(factory);
+
+    // Simulate the process the gradle runs
+    runGradleSimulation(project, plugin);
+
+    verify(factory).getDependencyAuditor(null, Collections.EMPTY_SET, Collections.singletonList(getExpectedProxy("https")));
+  }
+
+  /**
+   * Ensure that OssIndexPlugin properly assembles the proxy argument and passes it to the DependencyAuditor.
+   */
+  @Test
+  public void httpSystemProxyTest() throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+    Project project = mockProject();
+
+    // Mock the proxy being provided as project properties
+    mockSystemProxy(project, "http");
+
+    OssIndexPlugin plugin = new OssIndexPlugin();
+    AuditorFactory factory = mockAuditorFactory();
+    plugin.setAuditorFactory(factory);
+
+    // Simulate the process the gradle runs
+    runGradleSimulation(project, plugin);
+
+    verify(factory).getDependencyAuditor(null, Collections.EMPTY_SET, Collections.singletonList(getExpectedProxy("http")));
+  }
+
+  /**
+   * Ensure that OssIndexPlugin properly assembles the proxy argument and passes it to the DependencyAuditor.
+   */
+  @Test
+  public void httpsSystemProxyTest() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    Project project = mockProject();
+
+    // Mock the proxy being provided as project properties
+    mockSystemProxy(project, "https");
 
     OssIndexPlugin plugin = new OssIndexPlugin();
     AuditorFactory factory = mockAuditorFactory();
@@ -131,7 +171,20 @@ public class ProxyTests
   /**
    * Mock the project properties for a specified proxy
    */
-  private void mockProxy(final Project project, final String scheme) {
+  private void mockLocalProxy(final Project project, final String scheme) {
+    when(project.hasProperty(scheme + ".proxyHost")).thenReturn(true);
+    when(project.findProperty(scheme + ".proxyHost")).thenReturn(PROXY_HOST);
+    when(project.findProperty(scheme + ".proxyPort")).thenReturn(PROXY_PORT.toString());
+    when(project.findProperty(scheme + ".proxyUser")).thenReturn(PROXY_USER);
+    when(project.findProperty(scheme + ".proxyPassword")).thenReturn(PROXY_PASS);
+    when(project.findProperty(scheme + ".nonProxyHosts")).thenReturn(null);
+  }
+
+  /**
+   * Mock the project properties for a specified proxy
+   */
+  private void mockSystemProxy(final Project project, final String scheme) {
+    when(project.hasProperty("systemProp." + scheme + ".proxyHost")).thenReturn(true);
     when(project.findProperty("systemProp." + scheme + ".proxyHost")).thenReturn(PROXY_HOST);
     when(project.findProperty("systemProp." + scheme + ".proxyPort")).thenReturn(PROXY_PORT.toString());
     when(project.findProperty("systemProp." + scheme + ".proxyUser")).thenReturn(PROXY_USER);

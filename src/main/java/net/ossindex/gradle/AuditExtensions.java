@@ -20,6 +20,16 @@ public class AuditExtensions
 
   Collection<AuditExclusion> exclusion = new ArrayList<>();
 
+  public String proxyHost;
+
+  public Integer proxyPort;
+
+  public String proxyUser;
+
+  public String proxyPassword;
+
+  public String nonProxyHosts;
+
   public AuditExtensions(Project project) {
     this.project = project;
   }
@@ -45,4 +55,6 @@ public class AuditExtensions
   public Collection<AuditExclusion> getExclusions() {
     return exclusion;
   }
+
+
 }

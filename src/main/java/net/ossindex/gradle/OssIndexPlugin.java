@@ -52,14 +52,46 @@ public class OssIndexPlugin implements Plugin<Project> {
         audit.doLast(this::doAudit);
     }
 
+    /**
+     * Get the proxy if it exists. Check 3 different places:
+     *
+     *   1. The build.gradle file
+     *   2. The local properties
+     *   3. The system properties
+     */
     private Proxy getProxy(Project project, String scheme) {
         Proxy proxy = new Proxy();
-        proxy.setHost((String)project.findProperty("systemProp." + scheme + ".proxyHost"));
-        Object port = project.findProperty("systemProp." + scheme + ".proxyPort");
-        proxy.setPort(port == null ? null : Integer.parseInt((String)port));
-        proxy.setUser((String)project.findProperty("systemProp." + scheme + ".proxyUser"));
-        proxy.setPassword((String)project.findProperty("systemProp." + scheme + ".proxyPassword"));
-        proxy.setNonProxyHosts((String)project.findProperty("systemProp." + scheme + ".nonProxyHosts"));
+        // Try build.gradle properties
+        if (settings != null && settings.proxyHost != null) {
+            proxy = new Proxy();
+            proxy.setHost(settings.proxyHost);
+            proxy.setPort(settings.proxyPort);
+            proxy.setUser(settings.proxyUser);
+            proxy.setPassword(settings.proxyPassword);
+            proxy.setNonProxyHosts(settings.nonProxyHosts);
+        }
+
+        // Try the local properties
+        if (!proxy.isValid() && project.hasProperty(scheme + ".proxyHost")) {
+            proxy = new Proxy();
+            proxy.setHost((String) project.findProperty(scheme + ".proxyHost"));
+            Object port = project.findProperty(scheme + ".proxyPort");
+            proxy.setPort(port == null ? null : Integer.parseInt((String) port));
+            proxy.setUser((String) project.findProperty(scheme + ".proxyUser"));
+            proxy.setPassword((String) project.findProperty(scheme + ".proxyPassword"));
+            proxy.setNonProxyHosts((String) project.findProperty(scheme + ".nonProxyHosts"));
+        }
+
+        // Look for the system properties
+        if (!proxy.isValid() && project.hasProperty("systemProp." + scheme + ".proxyHost")) {
+            proxy = new Proxy();
+            proxy.setHost((String) project.findProperty("systemProp." + scheme + ".proxyHost"));
+            Object port = project.findProperty("systemProp." + scheme + ".proxyPort");
+            proxy.setPort(port == null ? null : Integer.parseInt((String) port));
+            proxy.setUser((String) project.findProperty("systemProp." + scheme + ".proxyUser"));
+            proxy.setPassword((String) project.findProperty("systemProp." + scheme + ".proxyPassword"));
+            proxy.setNonProxyHosts((String) project.findProperty("systemProp." + scheme + ".nonProxyHosts"));
+        }
         if (proxy.isValid()) {
             return proxy;
         } else {
