@@ -1,9 +1,11 @@
 package net.ossindex.gradle.audit;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
 
+import net.ossindex.gradle.AuditExtensions;
 import net.ossindex.gradle.OssIndexPlugin;
 import net.ossindex.gradle.input.ArtifactGatherer;
 import org.gradle.api.Project;
@@ -11,6 +13,8 @@ import org.gradle.api.Task;
 import org.gradle.api.plugins.ExtensionContainer;
 import org.junit.Test;
 
+import static org.gradle.internal.impldep.org.junit.Assert.assertEquals;
+import static org.gradle.internal.impldep.org.testng.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -50,6 +54,41 @@ public class ProxyTests
     runGradleSimulation(project, plugin);
 
     verify(factory).getDependencyAuditor(null, Collections.EMPTY_SET, Collections.EMPTY_LIST);
+  }
+
+  /**
+   * Ensure that OssIndexPlugin properly assembles the proxy argument and passes it to the DependencyAuditor.
+   */
+  @Test
+  public void settingsProxyIT()
+      throws InvocationTargetException, IllegalAccessException, NoSuchMethodException, NoSuchFieldException
+  {
+    Project project = mockProject();
+    AuditExtensions settings = new AuditExtensions(project);
+    settings.proxyScheme = "http";
+    settings.proxyHost = PROXY_HOST;
+    settings.proxyPort = PROXY_PORT;
+    settings.proxyUser = PROXY_USER;
+    settings.proxyPassword = PROXY_PASS;
+    settings.nonProxyHosts = null;
+
+    OssIndexPlugin plugin = new OssIndexPlugin();
+    Field field = OssIndexPlugin.class.getDeclaredField("settings");
+    try {
+      field.setAccessible(true);
+      field.set(plugin, settings);
+
+      AuditorFactory factory = mockAuditorFactory();
+      plugin.setAuditorFactory(factory);
+
+      // Simulate the process the gradle runs
+      runGradleSimulation(project, plugin);
+
+      verify(factory)
+          .getDependencyAuditor(null, Collections.EMPTY_SET, Collections.singletonList(getExpectedProxy("http")));
+    } finally {
+      field.set(plugin, null);
+    }
   }
 
   /**

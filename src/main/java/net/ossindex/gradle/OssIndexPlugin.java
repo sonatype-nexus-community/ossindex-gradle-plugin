@@ -62,7 +62,7 @@ public class OssIndexPlugin implements Plugin<Project> {
     private Proxy getProxy(Project project, String scheme) {
         Proxy proxy = new Proxy();
         // Try build.gradle properties
-        if (settings != null && settings.proxyHost != null) {
+        if (settings != null && scheme.equals(settings.proxyScheme) && settings.proxyHost != null) {
             proxy = new Proxy();
             proxy.setHost(settings.proxyHost);
             proxy.setPort(settings.proxyPort);

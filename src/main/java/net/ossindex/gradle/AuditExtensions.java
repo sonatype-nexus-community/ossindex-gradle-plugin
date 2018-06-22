@@ -20,6 +20,8 @@ public class AuditExtensions
 
   Collection<AuditExclusion> exclusion = new ArrayList<>();
 
+  public String proxyScheme;
+
   public String proxyHost;
 
   public Integer proxyPort;
