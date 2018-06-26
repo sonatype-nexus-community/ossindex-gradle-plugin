@@ -63,7 +63,6 @@ public class AuditResultReporter {
 
             // Now bail if exclusions cause all issues in this package to be ignored
             if (actualVulnerabilities == 0) {
-                System.err.println("FILTERDBG [" + this.hashCode() + "]: Vulnerabilities in " + descriptor.getMavenVersionId() + " are excluded due to settings");
                 logger.info("Vulnerabilities in " + descriptor.getMavenVersionId() + " are excluded due to settings");
                 continue;
             }
@@ -76,7 +75,6 @@ public class AuditResultReporter {
         currentVulnerabilityTotals = String.format("%s unignored (of %s total) vulnerabilities found",
             unignoredVulnerabilities,
             vulnerabilities);
-        System.err.println("FILTERDBG [" + this.hashCode() + "]: " + currentVulnerabilityTotals);
         logger.error(currentVulnerabilityTotals);
 
         // Update the JUnit plugin XML report object
@@ -93,7 +91,6 @@ public class AuditResultReporter {
     private void reportVulnerableArtifact(GradleArtifact importingArtifact, MavenPackageDescriptor descriptor) {
         currentVulnerableArtifact = String.format("%s introduces %s which has %s vulnerabilities",
                 importingArtifact.getFullDescription(), descriptor.getMavenVersionId(), descriptor.getVulnerabilityMatches());
-        System.err.println("FILTERDBG [" + this.hashCode() + "]: " + currentVulnerableArtifact);
         logger.error(currentVulnerableArtifact);
     }
 

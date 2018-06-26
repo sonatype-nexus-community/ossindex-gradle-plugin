@@ -100,9 +100,6 @@ public class OssIndexPlugin implements Plugin<Project> {
     }
 
     private synchronized void doAudit(Task task) {
-        if (DependencyAuditor.FILTERDBG) {
-            System.err.println("FILTERDBG OssIndexPlugin[" + this.hashCode() + "]: doAudit " + task.getProject());
-        }
         if (this.settings == null) {
             this.settings = getAuditExtensions(task.getProject());
         }
