@@ -67,10 +67,25 @@ public class GradleArtifact {
         return String.format("%s:%s:%s", group, name, version);
     }
 
+    private boolean ancestorIsAlso(ResolvedDependency gradleArtifact) {
+        if (parent == null) return false;
+        GradleArtifact currentParent = parent;
+        while(currentParent != null) {
+            if(isEquivalent(gradleArtifact, currentParent)) {
+                return true;
+            }
+            currentParent = currentParent.parent;
+        }
+
+        return false;
+    }
+
     private void addChildren(ResolvedDependency gradleArtifact) {
         gradleArtifact.getChildren().forEach(c -> {
-                    GradleArtifact child = new GradleArtifact(this, c);
-                    children.add(child);
+                    if(!ancestorIsAlso(c)){
+                        GradleArtifact child = new GradleArtifact(this, c);
+                        children.add(child);
+                    }
                 }
         );
     }
@@ -83,6 +98,12 @@ public class GradleArtifact {
         GradleArtifact gradleArtifact = (GradleArtifact) o;
 
         return getFullDescription() != null ? getFullDescription().equals(gradleArtifact.getFullDescription()) : gradleArtifact.getFullDescription() == null;
+    }
+
+    private boolean isEquivalent(ResolvedDependency dependency, GradleArtifact artifact) {
+        return dependency.getModule().getId().getName().equals(artifact.getName())
+                && dependency.getModule().getId().getGroup().equals(artifact.getGroup())
+                && dependency.getModule().getId().getVersion().equals(artifact.getVersion());
     }
 
     @Override
