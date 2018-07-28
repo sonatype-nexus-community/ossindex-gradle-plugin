@@ -1,7 +1,7 @@
 package net.ossindex.gradle.audit;
 
-import net.ossindex.common.PackageDescriptor;
-import net.ossindex.common.VulnerabilityDescriptor;
+import net.ossindex.common.OssiPackage;
+import net.ossindex.common.OssiVulnerability;
 import org.gradle.internal.impldep.com.google.gson.annotations.SerializedName;
 
 import javax.xml.bind.annotation.XmlElement;
@@ -12,9 +12,9 @@ public class MavenPackageDescriptor extends MavenIdWrapper {
 
     private MavenIdWrapper parent;
 
-    @XmlElement(name = "vulnerability-total")
-    @SerializedName("vulnerability-total")
-    private int vulnerabilityTotal;
+    @XmlElement(name = "unfiltered-vulnerability-count")
+    @SerializedName("unfiltered-vulnerability-count")
+    private int unfilteredVulnerabilityCount;
 
     @XmlElement(name = "vulnerability-matches")
     @SerializedName("vulnerability-matches")
@@ -22,7 +22,7 @@ public class MavenPackageDescriptor extends MavenIdWrapper {
 
     @XmlElementWrapper(name = "vulnerabilities")
     @XmlElement(name = "vulnerability")
-    private List<VulnerabilityDescriptor> vulnerabilities;
+    private List<OssiVulnerability> vulnerabilities;
 
     /**
      * Constructor required by jaxb
@@ -31,13 +31,13 @@ public class MavenPackageDescriptor extends MavenIdWrapper {
 
     }
 
-    public MavenPackageDescriptor(PackageDescriptor pkg) {
-        groupId = pkg.getGroup();
+    public MavenPackageDescriptor(OssiPackage pkg) {
+        groupId = pkg.getNamespace();
         artifactId = pkg.getName();
         version = pkg.getVersion();
-        vulnerabilityTotal = pkg.getVulnerabilityTotal();
-        vulnerabilityMatches = pkg.getVulnerabilityMatches();
         vulnerabilities = pkg.getVulnerabilities();
+        unfilteredVulnerabilityCount = pkg.getUnfilteredVulnerabilityMatches();
+        vulnerabilityMatches = vulnerabilities.size();
     }
 
     public void setParent(MavenIdWrapper parent) {
@@ -49,12 +49,12 @@ public class MavenPackageDescriptor extends MavenIdWrapper {
     }
 
     /**
-     * Get the total number of vulnerabilities for the package identified on the server.
+     * Get the number of vulnerabilities matching the supplied version, prior to any exclusions and filtering.
      *
      * @return Total number of vulnerabilities.
      */
-    public int getVulnerabilityTotal() {
-        return vulnerabilityTotal;
+    public int getUnfilteredVulnerabilityCount() {
+        return unfilteredVulnerabilityCount;
     }
 
     /**
@@ -71,7 +71,7 @@ public class MavenPackageDescriptor extends MavenIdWrapper {
      *
      * @return all vulnerabilities
      */
-    public List<VulnerabilityDescriptor> getVulnerabilities() {
+    public List<OssiVulnerability> getVulnerabilities() {
         return vulnerabilities;
     }
 

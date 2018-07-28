@@ -25,11 +25,12 @@ sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {
     compile gradleApi()
-    compile 'net.ossindex:ossindex-api:2.5.2'
+    compile 'net.ossindex:ossindex-api:3.0.0'
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:2.7.13'
     testCompile gradleTestKit()

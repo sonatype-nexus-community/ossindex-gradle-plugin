@@ -1,6 +1,6 @@
 package net.ossindex.gradle.audit;
 
-import net.ossindex.common.PackageDescriptor;
+import net.ossindex.common.OssiPackage;
 
 public class MavenIdWrapper {
 
@@ -30,8 +30,8 @@ public class MavenIdWrapper {
 
     }
 
-    public MavenIdWrapper(PackageDescriptor pkg) {
-        this.setGroupId(pkg.getGroup());
+    public MavenIdWrapper(OssiPackage pkg) {
+        this.setGroupId(pkg.getNamespace());
         this.setArtifactId(pkg.getName());
         this.setVersion(pkg.getVersion());
     }
