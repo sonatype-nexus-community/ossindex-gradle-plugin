@@ -102,8 +102,13 @@ public class AuditResultReporter
   }
 
   private void reportVulnerableArtifact(GradleArtifact importingArtifact, MavenPackageDescriptor descriptor) {
-    currentVulnerableArtifact = String.format("%s introduces %s which has %s vulnerabilities",
-        importingArtifact.getFullDescription(), descriptor.getMavenVersionId(), descriptor.getVulnerabilityMatches());
+    if (importingArtifact != null) {
+      currentVulnerableArtifact = String.format("%s introduces %s which has %s vulnerabilities",
+          importingArtifact.getFullDescription(), descriptor.getMavenVersionId(), descriptor.getVulnerabilityMatches());
+    } else {
+      currentVulnerableArtifact = String.format("%s is a direct dependency and has %s vulnerabilities",
+          descriptor.getMavenVersionId(), descriptor.getVulnerabilityMatches());
+    }
     logger.error(currentVulnerableArtifact);
   }
 
@@ -129,8 +134,7 @@ public class AuditResultReporter
         .filter(a -> a.getFullDescription().equals(mavenPackageDescriptor.getMavenVersionId()))
         .map(GradleArtifact::getTopMostParent)
         .findAny()
-        .orElseThrow(() -> new GradleException(
-            "Couldn't find importing artifact for " + mavenPackageDescriptor.getMavenVersionId()));
+        .orElse(null);
   }
 
   private Set<GradleArtifact> getAllDependencies() {
