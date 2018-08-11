@@ -1,5 +1,6 @@
 package net.ossindex.gradle.output;
 
+import net.ossindex.common.VulnerabilityDescriptor;
 import net.ossindex.gradle.AuditExtensions;
 import net.ossindex.gradle.audit.MavenPackageDescriptor;
 import net.ossindex.gradle.input.GradleArtifact;
@@ -7,7 +8,9 @@ import org.gradle.api.GradleException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -16,10 +19,21 @@ public class AuditResultReporter {
     private final Set<GradleArtifact> resolvedTopLevelArtifacts;
     private final AuditExtensions settings;
     private Set<GradleArtifact> allGradleArtifacts;
+    private String currentVulnerableArtifact = null;
+    ArrayList<String> currentVulnerabilityList = new ArrayList<>();
+    private String currentVulnerabilityTotals = null;
+    private String thisTask;
 
-    public AuditResultReporter(Set<GradleArtifact> resolvedTopLevelArtifacts, AuditExtensions settings) {
+    private JunitXmlReportWriter junitXmlReportWriter;
+
+    public AuditResultReporter(Set<GradleArtifact> resolvedTopLevelArtifacts,
+                               AuditExtensions settings,
+                               JunitXmlReportWriter junitXmlReportWriter,
+                               String thisTask) {
         this.resolvedTopLevelArtifacts = resolvedTopLevelArtifacts;
         this.settings = settings;
+        this.junitXmlReportWriter = junitXmlReportWriter;
+        this.thisTask = thisTask;
     }
 
     public void reportResult(Collection<MavenPackageDescriptor> results) {
@@ -39,11 +53,35 @@ public class AuditResultReporter {
                 logger.info(descriptor.getMavenVersionId() + " is ignored due to settings");
                 continue;
             }
+
+            // We already calculated unignored vulnerabilities. We need to include unexcluded vulnerabilities since they
+            // are handled by the audit library.
+            int actualVulnerabilities = descriptor.getVulnerabilities().size();
+            int expectedVulnerabilities = descriptor.getVulnerabilityMatches();
+            int unExcludedVulnerabilities = expectedVulnerabilities - actualVulnerabilities;
+            unignoredVulnerabilities -= unExcludedVulnerabilities;
+
+            // Now bail if exclusions cause all issues in this package to be ignored
+            if (actualVulnerabilities == 0) {
+                logger.info("Vulnerabilities in " + descriptor.getMavenVersionId() + " are excluded due to settings");
+                continue;
+            }
+
             GradleArtifact importingGradleArtifact = findImportingArtifactFor(descriptor);
             reportVulnerableArtifact(importingGradleArtifact, descriptor);
             reportIntroducedVulnerabilities(descriptor);
         }
-        logger.error(String.format("%s unignored (of %s total) vulnerabilities found", unignoredVulnerabilities, vulnerabilities));
+
+        currentVulnerabilityTotals = String.format("%s unignored (of %s total) vulnerabilities found",
+            unignoredVulnerabilities,
+            vulnerabilities);
+        logger.error(currentVulnerabilityTotals);
+
+        // Update the JUnit plugin XML report object
+        junitXmlReportWriter.updateJunitReport(currentVulnerabilityTotals,
+            thisTask,
+            currentVulnerableArtifact,
+            currentVulnerabilityList);
 
         if (unignoredVulnerabilities > 0) {
             throw new GradleException("Too many vulnerabilities (" + vulnerabilities + ") found.");
@@ -51,12 +89,21 @@ public class AuditResultReporter {
     }
 
     private void reportVulnerableArtifact(GradleArtifact importingArtifact, MavenPackageDescriptor descriptor) {
-        logger.error(String.format("%s introduces %s which has %s vulnerabilities",
-                importingArtifact.getFullDescription(), descriptor.getMavenVersionId(), descriptor.getVulnerabilityMatches()));
+        currentVulnerableArtifact = String.format("%s introduces %s which has %s vulnerabilities",
+                importingArtifact.getFullDescription(), descriptor.getMavenVersionId(), descriptor.getVulnerabilityMatches());
+        logger.error(currentVulnerableArtifact);
     }
 
-    private void reportIntroducedVulnerabilities(MavenPackageDescriptor descriptor) {
-        descriptor.getVulnerabilities().forEach(v -> logger.error(String.format("=> %s (see %s)", v.getTitle(), v.getUriString())));
+    private int reportIntroducedVulnerabilities(MavenPackageDescriptor descriptor) {
+        currentVulnerabilityList.clear();
+        List<VulnerabilityDescriptor> vulns = descriptor.getVulnerabilities();
+        vulns.forEach(v -> reportVulnerability(String.format("=> %s (see %s)", v.getTitle(), v.getUriString())));
+        return vulns.size();
+    }
+
+    private void reportVulnerability(String line) {
+        logger.error(line);
+        currentVulnerabilityList.add(line);
     }
 
     private GradleArtifact findImportingArtifactFor(MavenPackageDescriptor mavenPackageDescriptor) {

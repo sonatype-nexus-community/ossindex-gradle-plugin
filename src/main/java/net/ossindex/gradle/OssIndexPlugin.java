@@ -7,6 +7,7 @@ import net.ossindex.gradle.audit.Proxy;
 import net.ossindex.gradle.input.ArtifactGatherer;
 import net.ossindex.gradle.input.GradleArtifact;
 import net.ossindex.gradle.output.AuditResultReporter;
+import net.ossindex.gradle.output.JunitXmlReportWriter;
 import net.ossindex.gradle.output.PackageTreeReporter;
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
@@ -22,20 +23,26 @@ import java.util.Set;
 
 public class OssIndexPlugin implements Plugin<Project> {
 
+    private JunitXmlReportWriter junitXmlReportWriter = new JunitXmlReportWriter();
+    public static String junitReport = null;
+
+    private static AuditExtensions settings = null;
     private static final Logger logger = LoggerFactory.getLogger(OssIndexPlugin.class);
     private List<Proxy> proxies = new LinkedList<>();
-
+    private Project project = null;
     private AuditorFactory factory = new AuditorFactory();
-
     public void setAuditorFactory(AuditorFactory factory) {
         this.factory = factory;
     }
 
     @Override
-    public void apply(Project project) {
-        project.getExtensions().create("audit", AuditExtensions.class);
+    public synchronized void apply(Project project) {
+        this.project = project;
+
+        project.getExtensions().create("audit", AuditExtensions.class, project);
         Task audit = project.task("audit");
         Proxy proxy = getProxy(project, "http");
+
         if (proxy != null) {
             proxies.add(proxy);
         }proxy = getProxy(project, "https");
@@ -45,14 +52,46 @@ public class OssIndexPlugin implements Plugin<Project> {
         audit.doLast(this::doAudit);
     }
 
+    /**
+     * Get the proxy if it exists. Check 3 different places:
+     *
+     *   1. The build.gradle file
+     *   2. The local properties
+     *   3. The system properties
+     */
     private Proxy getProxy(Project project, String scheme) {
         Proxy proxy = new Proxy();
-        proxy.setHost((String)project.findProperty("systemProp." + scheme + ".proxyHost"));
-        Object port = project.findProperty("systemProp." + scheme + ".proxyPort");
-        proxy.setPort(port == null ? null : Integer.parseInt((String)port));
-        proxy.setUser((String)project.findProperty("systemProp." + scheme + ".proxyUser"));
-        proxy.setPassword((String)project.findProperty("systemProp." + scheme + ".proxyPassword"));
-        proxy.setNonProxyHosts((String)project.findProperty("systemProp." + scheme + ".nonProxyHosts"));
+        // Try build.gradle properties
+        if (settings != null && scheme.equals(settings.proxyScheme) && settings.proxyHost != null) {
+            proxy = new Proxy();
+            proxy.setHost(settings.proxyHost);
+            proxy.setPort(settings.proxyPort);
+            proxy.setUser(settings.proxyUser);
+            proxy.setPassword(settings.proxyPassword);
+            proxy.setNonProxyHosts(settings.nonProxyHosts);
+        }
+
+        // Try the local properties
+        if (!proxy.isValid() && project.hasProperty(scheme + ".proxyHost")) {
+            proxy = new Proxy();
+            proxy.setHost((String) project.findProperty(scheme + ".proxyHost"));
+            Object port = project.findProperty(scheme + ".proxyPort");
+            proxy.setPort(port == null ? null : Integer.parseInt((String) port));
+            proxy.setUser((String) project.findProperty(scheme + ".proxyUser"));
+            proxy.setPassword((String) project.findProperty(scheme + ".proxyPassword"));
+            proxy.setNonProxyHosts((String) project.findProperty(scheme + ".nonProxyHosts"));
+        }
+
+        // Look for the system properties
+        if (!proxy.isValid() && project.hasProperty("systemProp." + scheme + ".proxyHost")) {
+            proxy = new Proxy();
+            proxy.setHost((String) project.findProperty("systemProp." + scheme + ".proxyHost"));
+            Object port = project.findProperty("systemProp." + scheme + ".proxyPort");
+            proxy.setPort(port == null ? null : Integer.parseInt((String) port));
+            proxy.setUser((String) project.findProperty("systemProp." + scheme + ".proxyUser"));
+            proxy.setPassword((String) project.findProperty("systemProp." + scheme + ".proxyPassword"));
+            proxy.setNonProxyHosts((String) project.findProperty("systemProp." + scheme + ".nonProxyHosts"));
+        }
         if (proxy.isValid()) {
             return proxy;
         } else {
@@ -60,12 +99,27 @@ public class OssIndexPlugin implements Plugin<Project> {
         }
     }
 
-    private void doAudit(Task task) {
+    private synchronized void doAudit(Task task) {
+        if (this.settings == null) {
+            this.settings = getAuditExtensions(task.getProject());
+        }
+        // Mocked tests may not have settings
+        junitReport = settings != null ? settings.junitReport : null;
+        if (settings != null) {
+            junitXmlReportWriter.init(junitReport);
+        }
+
         ArtifactGatherer gatherer = factory.getGatherer();
         Set<GradleArtifact> gradleArtifacts = gatherer != null ? gatherer.gatherResolvedArtifacts(task.getProject()) : null;
-        DependencyAuditor auditor = factory.getDependencyAuditor(gradleArtifacts, proxies);
 
-        AuditResultReporter reporter = new AuditResultReporter(gradleArtifacts, getAuditExtensions(task.getProject()));
+        AuditExtensions auditConfig = getAuditExtensions(task.getProject());
+        DependencyAuditor auditor = factory.getDependencyAuditor(auditConfig, gradleArtifacts, proxies);
+
+        String tmpTask = project.getDisplayName().split(" ")[1].replaceAll("\'","") + ":audit";
+        AuditResultReporter reporter = new AuditResultReporter(gradleArtifacts,
+            getAuditExtensions(task.getProject()),
+            junitXmlReportWriter,
+            project.getDisplayName().split(" ")[1].replaceAll("\'","") + ":audit");
 
         logger.info(String.format("Found %s gradleArtifacts to audit", gradleArtifacts.size()));
 
@@ -78,10 +132,17 @@ public class OssIndexPlugin implements Plugin<Project> {
                 throw e;
             }
         } finally {
-            PackageTreeReporter treeReporter = new PackageTreeReporter(getAuditExtensions(task.getProject()));
+            PackageTreeReporter treeReporter = new PackageTreeReporter(auditConfig);
             treeReporter.reportDependencyTree(gradleArtifacts, packagesWithVulnerabilities);
+            if (junitReport != null) {
+                try {
+                    junitXmlReportWriter.writeXmlReport(junitReport);
+                    junitXmlReportWriter = null;
+                } catch (Exception e) {
+                    System.out.println("Failed to create JUnit Plugin report:  " + e.getMessage());
+                }
+            }
         }
-
     }
 
     private boolean shouldFailOnError(Project project) {

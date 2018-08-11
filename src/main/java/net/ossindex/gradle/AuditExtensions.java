@@ -1,23 +1,62 @@
 package net.ossindex.gradle;
 
+import groovy.lang.Closure;
 import net.ossindex.gradle.audit.MavenPackageDescriptor;
+import org.gradle.api.Project;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
-public class AuditExtensions {
-    public boolean failOnError = true;
-    public List<String> ignore = new ArrayList<>();
+public class AuditExtensions
+{
+  private final Project project;
 
-    public boolean isIgnored(MavenPackageDescriptor descriptor) {
-        return isWholeArtifactIgnored(descriptor) || isSpecificVersionIgnored(descriptor);
-    }
+  public String junitReport;
 
-    private boolean isSpecificVersionIgnored(MavenPackageDescriptor descriptor) {
-        return ignore.stream().anyMatch(ignored -> ignored.equals(descriptor.getMavenVersionId()));
-    }
+  public boolean failOnError = true;
 
-    private boolean isWholeArtifactIgnored(MavenPackageDescriptor descriptor) {
-        return ignore.stream().anyMatch(ignored -> ignored.equals(descriptor.getMavenPackageId()));
-    }
+  public List<String> ignore = new ArrayList<>();
+
+  Collection<AuditExclusion> exclusion = new ArrayList<>();
+
+  public String proxyScheme;
+
+  public String proxyHost;
+
+  public Integer proxyPort;
+
+  public String proxyUser;
+
+  public String proxyPassword;
+
+  public String nonProxyHosts;
+
+  public AuditExtensions(Project project) {
+    this.project = project;
+  }
+
+  public boolean isIgnored(MavenPackageDescriptor descriptor) {
+    return isWholeArtifactIgnored(descriptor) || isSpecificVersionIgnored(descriptor);
+  }
+
+  private boolean isSpecificVersionIgnored(MavenPackageDescriptor descriptor) {
+    return ignore.stream().anyMatch(ignored -> ignored.equals(descriptor.getMavenVersionId()));
+  }
+
+  private boolean isWholeArtifactIgnored(MavenPackageDescriptor descriptor) {
+    return ignore.stream().anyMatch(ignored -> ignored.equals(descriptor.getMavenPackageId()));
+  }
+
+  public AuditExclusion exclusion(Closure closure) {
+    AuditExclusion exclusion = (AuditExclusion) project.configure(new AuditExclusion(), closure);
+    this.exclusion.add(exclusion);
+    return exclusion;
+  }
+
+  public Collection<AuditExclusion> getExclusions() {
+    return exclusion;
+  }
+
+
 }

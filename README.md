@@ -102,10 +102,67 @@ If the `--info` flag is provided to gradle it will output a dependency tree whic
 
 ![Tree](docs/Tree.PNG)
 
-Report output
+## Reporting in a Jenkins Pipeline
 -------------
 
-TODO
+The gradle plugin supports writing out test reports in the correct XML format for the
+[Jenkins JUnit Reporting Plugin](https://wiki.jenkins.io/display/JENKINS/JUnit+Plugin).
+To switch on this reporting, set the path to the report in you project's build.gradle file using the **"junitReport"** element like so:
+
+```
+audit {
+        failOnError = false
+        ignore = [ 'ch.qos.logback:logback-core' ]
+        junitReport = "./ossindex/junitReport.xml"
+    }
+```
+
+This would create the file in an /ossindex folder in the project root.
+
+To access this using the JUnit plugin in a Jenkins pipeline:
+
+```
+    stage('OSSIndex Scan') {
+        steps {
+            // Run the audit
+            sh "./gradlew --no-daemon --stacktrace audit"
+        }
+        post {
+            always {
+                // Tell junit plugin to use report
+                junit '**/ossindex/junitReport.xml'
+                // Fail stage if '<failure' found in report
+                sh "[[ ! \$(grep '<failure' ./ossindex/junitReport.xml) ]]"
+            }
+        }
+    }
+```
+
+NOTE: The junit plugin uses a slightly different syntax to reference the path.
+
+The example code creates a stage in the pipeline, best put between checkout and compile, to run the ossindex
+scan and then run the reporting plugin.
+
+The line:
+```
+    sh "[[ ! \$(grep '<failure' ./ossindex/junitReport.xml) ]]"
+```
+
+Ensures that the build fails if any failures are reported.
+
+Set
+```
+    failOnError = false
+```
+As failOnError is true by default and will cause the scan to exit on the first failure, instead of finding them all.
+
+### Stages
+
+![Typical Pipeline Stage](https://github.com/museadmin/ossindex-gradle-plugin/blob/simple-junit-xml-format-normalisation/docs/pipeline_stages.png)
+
+### Report Output
+
+![Typical Report](https://github.com/museadmin/ossindex-gradle-plugin/blob/simple-junit-xml-format-normalisation/docs/example_report.png)
 
 Disable fail on error
 ------------------------
@@ -118,8 +175,8 @@ audit {
 }
 ```
 
-Ignore vulnerability for package(s)
------------------------------------
+Ignore: Simple vulnerability management
+---------------------------------------
 
 To ignore vulnerabilities from specific artifacts you can specify the artifacts on two ways:
 
@@ -144,3 +201,107 @@ audit {
     ignore = [ 'org.dependency:thelibrary', 'net.awesomelibs:anotherlib:1.0.0' ]
 }
 ```
+
+[ALPHA] Exclusions: Advanced vulnerability management
+-----------------------------------------------------
+Exclusions provide a similar task as "ignore", but with more expressiveness.
+
+Ignore all vulnerabilities in a specific package version. This ignores only vulnerabilities
+directly in the specified package.
+
+```
+audit {
+    exclusion = {
+        packages: [ 'org.dependency:thelibrary:1.0.0' ]
+    }
+}
+```
+
+Ignore all vulnerabilities in a specific package. This ignores only vulnerabilities
+directly in the specified package.
+
+```
+audit {
+    exclusion = {
+        packages: [ 'org.dependency:thelibrary' ]
+    }
+}
+```
+
+Ignore a specific vulnerability. Some vulnerabilities are assigned to multiple
+packages. This will ignore *all instances* of this vulnerability in any package.
+
+```
+audit {
+    exclusion = {
+        id: [ '1234567890' ]
+    }
+}
+```
+
+Ignore a specific vulnerability in a specific package version's dependencies. Note that this
+vulnerability does not necessarily need to belong to the exact package, but be
+somewhere in the dependency tree under the package.
+
+As vulnerabilities are assigned to "vulnerable packages", including a the vulnerable
+package in this way will ignore the vulnerability for *anyone* who depends on this
+package version.
+
+Instead you can specify a parent package which does not express the vulnerability or
+otherwise mitigates the problem, which other packages which include the vulnerable
+package will still report the vulnerability.
+
+```
+audit {
+    exclusion = {
+        packages: [ 'org.dependency:thelibrary:1.0.0' ]
+        id: [ '1234567890' ]
+    }
+}
+```
+
+Ignore a specific vulnerability belonging to a specific package's dependencies
+(any version).  Note that this
+vulnerability does not necessarily need to belong to the exact package, but be
+somewhere in the dependency tree under the package.
+
+As vulnerabilities are assigned to "vulnerable packages", including a the vulnerable
+package in this way will ignore the vulnerability for *anyone* who depends on this
+package.
+
+Instead you can specify a parent package which does not express the vulnerability or
+otherwise mitigates the problem, which other packages which include the vulnerable
+package will still report the vulnerability.
+
+```
+audit {
+    exclusion = {
+        packages: [ 'org.dependency:thelibrary' ]
+        id: [ '1234567890' ]
+    }
+}
+```
+
+Ignore a specific vulnerability belonging to a dependency path that has multiple
+packages that MUST be in the path. This can handle more complex situations.
+
+For example: The same vulnerability can affect both package 'A' and 'B'. Our code includes
+'A' as a dependency of 'Z'.
+
+By setting up the exclusion using **both** 'A' and 'Z' we exclude the vulnerability
+only in the situation where it is found in package 'A' when included by 'Z'.
+
+The vulnerability will still be reported if:
+
+* We include package 'B' anywhere
+* We include package 'A' as a dependency of any other package
+
+```
+audit {
+    exclusion = {
+        packages: [ 'org.parent.package:theParent', 'org.dependency:vulnerablePackage ]
+        id: [ '1234567890' ]
+    }
+}
+```
+
