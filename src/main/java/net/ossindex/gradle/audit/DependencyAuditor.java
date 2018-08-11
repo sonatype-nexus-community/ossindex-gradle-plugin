@@ -107,13 +107,12 @@ public class DependencyAuditor
   }
 
   private PackageCoordinate buildCoordinate(final GradleArtifact gradleArtifact) {
-    PackageCoordinate coord = PackageCoordinate.newBuilder()
+    return PackageCoordinate.newBuilder()
         .withFormat("maven")
         .withNamespace(gradleArtifact.getGroup())
         .withName(gradleArtifact.getName())
         .withVersion(gradleArtifact.getVersion())
         .build();
-    return coord;
   }
 
   private String toString(PackageCoordinate pkg) {

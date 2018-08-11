@@ -112,7 +112,7 @@ To switch on this reporting, set the path to the report in you project's build.g
 ```
 audit {
         failOnError = false
-        ignore = [ 'ch.qos.logback:logback-core' ]        ]
+        ignore = [ 'ch.qos.logback:logback-core' ]
         junitReport = "./ossindex/junitReport.xml"
     }
 ```
