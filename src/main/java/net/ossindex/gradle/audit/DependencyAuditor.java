@@ -1,5 +1,6 @@
 package net.ossindex.gradle.audit;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -56,6 +57,31 @@ public class DependencyAuditor
         exclusion.apply(filter);
       }
       request.addVulnerabilityFilter(filter);
+      if (config.cache != null) {
+        File file = new File(config.cache);
+        if (file.exists()) {
+          if (!file.isFile()) {
+            throw new GradleException("cache option must specify a file (" + config.cache + ")");
+          }
+          if (!file.canWrite()) {
+            throw new GradleException("cannot write to the specified cache file (" + config.cache + ")");
+          }
+        }
+        File parentDir = file.getParentFile();
+        if (parentDir.exists()) {
+          if (!parentDir.canWrite()) {
+            throw new GradleException("cannot write to cache dir (" + config.cache + ")");
+          }
+          if (!parentDir.canExecute()) {
+            throw new GradleException("cannot access cache dir, need execute permissions on dir (" + config.cache + ")");
+          }
+        } else {
+          if (!parentDir.mkdirs()) {
+            throw new GradleException("cannot create dir for cache (" + config.cache + ")");
+          }
+        }
+        request.setCacheFile(file.getAbsolutePath());
+      }
     }
   }
 

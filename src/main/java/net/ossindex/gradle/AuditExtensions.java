@@ -4,6 +4,7 @@ import groovy.lang.Closure;
 import net.ossindex.gradle.audit.MavenPackageDescriptor;
 import org.gradle.api.Project;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -31,6 +32,8 @@ public class AuditExtensions
   public String proxyPassword;
 
   public String nonProxyHosts;
+
+  public String cache;
 
   public AuditExtensions(Project project) {
     this.project = project;
