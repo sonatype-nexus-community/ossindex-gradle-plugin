@@ -96,6 +96,32 @@ following, where the package and vulnerability details depends on what is identi
 
 ![Failure](docs/Vulnerabilities.PNG)
 
+### Credentials
+
+The OSS Index API is rate limited. In many cases the limit is more than
+sufficient, however in heavier use cases an increased limit might be desired.
+This can be attained by creating a user account at
+[OSS Index](https://ossindex.sonatype.org) and supplying the username and `token`
+to the plugin. The `token` can be retrieved from the OSS Index settings page
+of the user.
+
+As you don't want credentials stored in a source repository, you use the
+gradle properties file to specify the cache folder. In the gradle properties,
+write this:
+
+```
+ossindexUser = user@example.com
+ossindexToken = ef40752eeb642ba1c3df1893d270c6f9fb7ab9e1
+```
+
+In your build.gradle file, add this:
+
+```
+audit {
+        user = ossindexUser
+        token = ossindexToken
+    }
+```
 
 ### Dependency tree of vulnerabilities
 If the `--info` flag is provided to gradle it will output a dependency tree which shows the transitive dependencies which have vulnerabilities.
@@ -305,3 +331,14 @@ audit {
 }
 ```
 
+### Cache
+
+In order to reduce round trips to OSS Index (as there is rate limiting), a
+local cache file is used. By default it is in the `.ossindex` directory
+in the users home folder. This location can be overloaded.
+
+```
+audit {
+    cache = "/tmp/ossindex.cache"
+}
+```
