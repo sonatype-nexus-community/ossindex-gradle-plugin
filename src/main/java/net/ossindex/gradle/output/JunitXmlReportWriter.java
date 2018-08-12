@@ -1,5 +1,6 @@
 package net.ossindex.gradle.output;
 
+import org.gradle.api.GradleException;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -171,7 +172,7 @@ public class JunitXmlReportWriter {
     }
 
     private Boolean parentDirIsWritable(String pathToReport) throws java.io.IOException {
-        File dir = new File(pathToReport);
+        File dir = new File(pathToReport).getAbsoluteFile();
         String parentDir = dir.getParent();
         if (parentDir != null) {
             Set<PosixFilePermission> permissions = Files.getPosixFilePermissions(Paths.get(parentDir), LinkOption.NOFOLLOW_LINKS);
