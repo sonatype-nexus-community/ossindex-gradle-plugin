@@ -35,6 +35,10 @@ public class AuditExtensions
 
   public String cache;
 
+  public String user;
+
+  public String token;
+
   public AuditExtensions(Project project) {
     this.project = project;
   }
