@@ -1,5 +1,20 @@
 # ossindex-gradle-plugin
-Audits a [gradle](https://gradle.org/) project using the [OSS Index REST API v2.0](https://ossindex.net) to identify known vulnerabilities in its dependencies.
+Audits a [gradle](https://gradle.org/) project using the [OSS Index REST API v3](https://ossindex.sonatype.org/rest) to identify known vulnerabilities in its dependencies.
+
+New Release Notes
+-------------
+
+This release uses the new OSS Index v3 API. There are a few differences of note:
+
+* Vulnerability IDs have changed, they are now UUIDs instead of long integers.
+  These should not change again: sorry for the inconvenience.
+* The new API has rate limiting, which is higher for authenticated users. Many
+  users should be fine running unauthenticated, but if you start running
+  into rate limit issues this can easily be resolved by getting a free OSS Index
+  account and providing credentials (discussed below).
+* We have added results caching in an attempt to reduce server hits (and thus
+  reduce rate limit problems). Setting the cache location is described below.
+
 
 Requirements
 -------------
