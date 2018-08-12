@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.base.Strings;
 import net.ossindex.common.IPackageRequest;
 import net.ossindex.common.OssIndexApi;
 import net.ossindex.common.OssiPackage;
@@ -51,13 +52,16 @@ public class DependencyAuditor
 
   private void configure() {
     if (config != null) {
+      // Filter configuration
       IVulnerabilityFilter filter = VulnerabilityFilterFactory.getInstance().createVulnerabilityFilter();
       Collection<AuditExclusion> exclusions = config.getExclusions();
       for (AuditExclusion exclusion : exclusions) {
         exclusion.apply(filter);
       }
       request.addVulnerabilityFilter(filter);
-      if (config.cache != null) {
+
+      // Cache configuration
+      if (!Strings.isNullOrEmpty(config.cache )) {
         File file = new File(config.cache);
         if (file.exists()) {
           if (!file.isFile()) {
@@ -81,6 +85,11 @@ public class DependencyAuditor
           }
         }
         request.setCacheFile(file.getAbsolutePath());
+      }
+
+      // Credentials configuration
+      if (!Strings.isNullOrEmpty(config.user) && !Strings.isNullOrEmpty(config.token)) {
+        request.setCredentials(config.user, config.token);
       }
     }
   }
