@@ -40,9 +40,17 @@ public class DependencyAuditor
                            final List<Proxy> proxies)
   {
     this.config = auditConfig;
-    for (Proxy proxy : proxies) {
-      logger.info("Using proxy: " + proxy);
-      OssIndexApi.addProxy(proxy.getScheme(), proxy.getHost(), proxy.getPort(), proxy.getUser(), proxy.getPassword());
+    switch(proxies.size()) {
+      case 0:
+        logger.info("Direct OSSI connection (" + proxies.size() + " proxies configured)");
+        break;
+      default:
+        logger.info("Using proxy (" + proxies.size() + ")");
+        for (Proxy proxy : proxies) {
+          logger.info("  * " + proxy);
+          OssIndexApi.addProxy(proxy.getScheme(), proxy.getHost(), proxy.getPort(), proxy.getUser(), proxy.getPassword());
+        }
+        break;
     }
 
     request = OssIndexApi.createPackageRequest();
