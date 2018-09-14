@@ -37,6 +37,7 @@ public class OssIndexPlugin implements Plugin<Project> {
 
     @Override
     public synchronized void apply(Project project) {
+        logger.info("Apply OSS Index Plugin");
         this.project = project;
 
         project.getExtensions().create("audit", AuditExtensions.class, project);
