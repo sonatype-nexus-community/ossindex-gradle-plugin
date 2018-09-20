@@ -109,8 +109,14 @@ public class AuditResultReporter
 
     private void reportVulnerableArtifact(GradleArtifact importingArtifact, MavenPackageDescriptor descriptor) {
         currentVulnerableArtifact = importingArtifact == null ?
-                String.format("%s has %s vulnerabilities", descriptor.getMavenVersionId(), descriptor.getVulnerabilityMatches())
-                : String.format("%s introduces %s which has %s vulnerabilities", importingArtifact.getFullDescription(),
+            String.format("%s introduces %s which has %s vulnerabilities",
+                descriptor.getMavenVersionId(),
+                descriptor.getMavenVersionId(),
+                descriptor.getVulnerabilityMatches()) :
+            String.format("%s introduces %s which has %s vulnerabilities",
+                importingArtifact.getFullDescription(),
+                descriptor.getMavenVersionId(),
+                descriptor.getVulnerabilityMatches());
                 descriptor.getMavenVersionId(), descriptor.getVulnerabilityMatches());
         logger.error(currentVulnerableArtifact);
     }

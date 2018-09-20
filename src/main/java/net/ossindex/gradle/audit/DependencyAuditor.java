@@ -69,7 +69,7 @@ public class DependencyAuditor
       request.addVulnerabilityFilter(filter);
 
       // Cache configuration
-      if (!Strings.isNullOrEmpty(config.cache )) {
+      if (!Strings.isNullOrEmpty(config.cache)) {
         File file = new File(config.cache);
         if (file.exists()) {
           if (!file.isFile()) {
@@ -85,9 +85,11 @@ public class DependencyAuditor
             throw new GradleException("cannot write to cache dir (" + config.cache + ")");
           }
           if (!parentDir.canExecute()) {
-            throw new GradleException("cannot access cache dir, need execute permissions on dir (" + config.cache + ")");
+            throw new GradleException(
+                "cannot access cache dir, need execute permissions on dir (" + config.cache + ")");
           }
-        } else {
+        }
+        else {
           if (!parentDir.mkdirs()) {
             throw new GradleException("cannot create dir for cache (" + config.cache + ")");
           }
@@ -98,6 +100,14 @@ public class DependencyAuditor
       // Credentials configuration
       if (!Strings.isNullOrEmpty(config.user) && !Strings.isNullOrEmpty(config.token)) {
         request.setCredentials(config.user, config.token);
+      }
+
+      if (config.packagesPerRequest != null) {
+        request.setMaximumPackagesPerRequest(config.packagesPerRequest);
+      }
+
+      if (config.cacheTimeout != null) {
+        request.setCacheTimeout(config.cacheTimeout);
       }
     }
   }
@@ -121,7 +131,31 @@ public class DependencyAuditor
       return results;
     }
     catch (IOException e) {
-      throw new GradleException("Error trying to get audit results", e);
+      if (e.getMessage().contains("(429)")) {
+        // Non-registered users should be told about registering
+        if(Strings.isNullOrEmpty(config.user)) {
+          throw new GradleException("Too many requests (429): Use OSS Index credentials for increased rate limit.", e);
+        }
+        // Registered users can choose whether this is an error or not
+        else {
+          // If the user has decided that 429 is a warning
+          if (Boolean.FALSE.equals(config.rateLimitAsError)) {
+            logger.info("Too many requests (429) trying to get audit results. Current results have been cached,");
+            logger.info("wait 60+ minutes then run again to audit more packages. If you run builds once a day");
+            logger.info("and always see this message, you may want to run the build more often or increase the");
+            logger.info("cache timeout to 48 or more hours.");
+            return Collections.emptyList();
+          }
+          // Otherwise 429 is an error
+          else {
+            throw new GradleException("Error trying to get audit results: " + e.getMessage(), e);
+          }
+        }
+      }
+      // Unknown exceptions are errors
+      else {
+        throw new GradleException("Error trying to get audit results: " + e.getMessage(), e);
+      }
     }
   }
 

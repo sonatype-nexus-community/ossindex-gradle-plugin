@@ -39,6 +39,12 @@ public class AuditExtensions
 
   public String token;
 
+  public Integer packagesPerRequest;
+
+  public Boolean rateLimitAsError;
+
+  public Integer cacheTimeout;
+
   public AuditExtensions(Project project) {
     this.project = project;
   }
