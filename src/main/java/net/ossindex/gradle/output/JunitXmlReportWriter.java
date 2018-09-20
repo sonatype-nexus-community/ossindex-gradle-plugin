@@ -1,6 +1,7 @@
 package net.ossindex.gradle.output;
 
-import org.gradle.api.GradleException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Set;
 
 public class JunitXmlReportWriter {
+    private static final Logger logger = LoggerFactory.getLogger(JunitXmlReportWriter.class);
 
     public Integer testCaseId = 0;
     private boolean skip = false;
@@ -122,12 +124,14 @@ public class JunitXmlReportWriter {
         String failureCount = getTotalOfElementsByName("failure").toString();
         modifyElementAttribute("testsuites", 0, "failures", failureCount);
 
-        if(parentDirIsWritable(pathToReport)) {
+        File path = new File(pathToReport).getAbsoluteFile();
+
+        if(parentDirIsWritable(path)) {
             synchronized (fileLock) {// Make sure we are not reading and writing at the same time
                 TransformerFactory transformerFactory = TransformerFactory.newInstance();
                 Transformer transformer = transformerFactory.newTransformer();
                 DOMSource source = new DOMSource(doc);
-                StreamResult result = new StreamResult(new File(pathToReport));
+                StreamResult result = new StreamResult(path);
 
                 transformer.setOutputProperty(OutputKeys.INDENT, "yes");
                 transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
@@ -135,7 +139,7 @@ public class JunitXmlReportWriter {
                 transformer.transform(source, result);
             }
         } else {
-            throw new java.io.IOException("Report (" + pathToReport + ") failed permissions check.");
+            throw new java.io.IOException("Report (" + path + ") failed permissions check.");
         }
     }
 
@@ -171,11 +175,13 @@ public class JunitXmlReportWriter {
         nodeAttr.setTextContent(value);
     }
 
-    private Boolean parentDirIsWritable(String pathToReport) throws java.io.IOException {
-        File dir = new File(pathToReport).getAbsoluteFile();
-        String parentDir = dir.getParent();
-        if (parentDir != null) {
-            Set<PosixFilePermission> permissions = Files.getPosixFilePermissions(Paths.get(parentDir), LinkOption.NOFOLLOW_LINKS);
+    private Boolean parentDirIsWritable(File path) throws java.io.IOException {
+        File parentDir = path.getParentFile();
+        if (!parentDir.exists()) {
+            parentDir.mkdirs();
+        }
+        if (parentDir.exists()) {
+            Set<PosixFilePermission> permissions = Files.getPosixFilePermissions(Paths.get(parentDir.getAbsolutePath()), LinkOption.NOFOLLOW_LINKS);
             return (permissions.contains(PosixFilePermission.OTHERS_WRITE) ||
                     permissions.contains(PosixFilePermission.GROUP_WRITE) ||
                     permissions.contains(PosixFilePermission.OWNER_WRITE)
