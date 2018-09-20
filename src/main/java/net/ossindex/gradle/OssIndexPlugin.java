@@ -139,7 +139,7 @@ public class OssIndexPlugin implements Plugin<Project> {
                     junitXmlReportWriter.writeXmlReport(junitReport);
                     junitXmlReportWriter = null;
                 } catch (Exception e) {
-                    System.out.println("Failed to create JUnit Plugin report:  " + e.getMessage());
+                    logger.error("ERROR: Failed to create JUnit Plugin report: " + e.getMessage());
                 }
             }
         }
