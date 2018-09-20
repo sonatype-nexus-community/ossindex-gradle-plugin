@@ -117,7 +117,6 @@ public class AuditResultReporter
                 importingArtifact.getFullDescription(),
                 descriptor.getMavenVersionId(),
                 descriptor.getVulnerabilityMatches());
-                descriptor.getMavenVersionId(), descriptor.getVulnerabilityMatches());
         logger.error(currentVulnerableArtifact);
     }
 
