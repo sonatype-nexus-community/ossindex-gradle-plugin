@@ -15,6 +15,26 @@ New Release Notes
 * We have added results caching in an attempt to reduce server hits (and thus
   reduce rate limit problems). Setting the cache location is described below.
 
+Table of Contents
+-----------------
+
+  * [New Release Notes](#new-release-notes)
+  * [Requirements](#requirements)
+  * [Usage](#usage)
+    + [Installing](#installing)
+    + [Running the audit](#running-the-audit)
+    + [Success output](#success-output)
+    + [Error output](#error-output)
+    + [Credentials](#credentials)
+    + [Prevent error on exceeding rate limit](#prevent-error-on-exceeding-rate-limit)
+    + [Dependency tree of vulnerabilities](#dependency-tree-of-vulnerabilities)
+    + [Reporting in a Jenkins Pipeline](#reporting-in-a-jenkins-pipeline)
+    + [Stages](#stages)
+    + [Report Output](#report-output)
+  * [Disable fail on error](#disable-fail-on-error)
+  * [Ignore: Simple vulnerability management](#ignore--simple-vulnerability-management)
+  * [Exclusions: Advanced vulnerability management](#-alpha--exclusions--advanced-vulnerability-management)
+  * [Cache](#cache)
 
 Requirements
 -------------
@@ -25,7 +45,7 @@ Requirements
 Usage
 -----
 
-# Installing
+### Installing
 
 (NOTE: Versions < 1.0 are considered preview)
 
@@ -58,7 +78,7 @@ buildscript {
 apply plugin: "net.ossindex.audit"
 ```
 
-# Running the audit
+### Running the audit
 
 To run the audit standalone specify the task `audit`:
 
@@ -70,40 +90,12 @@ To use it before compiling write
 
 into your buildscript.
 
-# Success output
+### Success output
 This will run the OSS Index Auditor against the applicable maven project. A successful
 scan finding no errors will look something like this:
 
 ![Success](docs/NoVulnerabilities.PNG)
 
-# Failures
-
-The following failure outputs are made with this gradle project:
-
-```
-buildscript {
-    repositories {
-        mavenLocal()
-    }
-    dependencies {
-        classpath 'net.ossindex:ossindex-gradle-plugin:+'
-    }
-}
-
-apply plugin: 'net.ossindex.audit'
-apply plugin: 'java'
-
-repositories {
-    mavenLocal()
-    mavenCentral()
-    jcenter()
-}
-
-dependencies {
-    // This dependency has transitive dependencies to 2 artifacts which contain vulnerabilities
-    compile 'org.dependency:vulnerable:1.0.0'
-}
-```
 
 ### Error output
 If a vulnerability is found that might impact your project, the output will resemble the
@@ -138,14 +130,32 @@ audit {
     }
 ```
 
+The credentialed rate limit is 64 requests per hour, where each request can fetch
+information for up to 128 packages. (Strictly speaking, you actually have 64 requests which
+replenish at a rate of one per minute).
+
+### Prevent error on exceeding rate limit
+It may be that you know you are going to exceed the rate limit, but you want
+a run to complete without failing. This is done by setting the "rateLimitAsError"
+option.
+
+```
+audit {
+        rateLimitAsError = false
+    }
+```
+
+By default the cache resets every 12 hours, which means if you exceed the
+credentialled limit, you can run multiple times a day (eg. once an hour) and cached packages
+WILL NOT be rechecked on the server and therefore rate limiting will not
+be affected by those packages.
 
 ### Dependency tree of vulnerabilities
 If the `--info` flag is provided to gradle it will output a dependency tree which shows the transitive dependencies which have vulnerabilities.
 
 ![Tree](docs/Tree.PNG)
 
-## Reporting in a Jenkins Pipeline
--------------
+### Reporting in a Jenkins Pipeline
 
 The gradle plugin supports writing out test reports in the correct XML format for the
 [Jenkins JUnit Reporting Plugin](https://wiki.jenkins.io/display/JENKINS/JUnit+Plugin).
@@ -244,7 +254,7 @@ audit {
 }
 ```
 
-[ALPHA] Exclusions: Advanced vulnerability management
+Exclusions: Advanced vulnerability management
 -----------------------------------------------------
 Exclusions provide a similar task as "ignore", but with more expressiveness.
 
@@ -347,7 +357,8 @@ audit {
 }
 ```
 
-### Cache
+Cache
+-----
 
 In order to reduce round trips to OSS Index (as there is rate limiting), a
 local cache file is used. By default it is in the `.ossindex` directory
