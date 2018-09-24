@@ -4,7 +4,7 @@ Audits a [gradle](https://gradle.org/) project using the [OSS Index REST API v3]
 New Release Notes
 -------------
 
-This release uses the new OSS Index v3 API. There are a few differences of note:
+**This release uses the new OSS Index v3 API**. There are a few differences of note:
 
 * Vulnerability IDs have changed, they are now UUIDs instead of long integers.
   These should not change again: sorry for the inconvenience.
@@ -129,19 +129,7 @@ ossindexUser=user@example.com
 ossindexToken=ef40752eeb642ba1c3df1893d270c6f9fb7ab9e1
 ```
 
-In your build.gradle file, add one of the following. It seems that some users
-have different config formats (perhaps gradle version related?):
-
-either
-
-```
-audit {
-        user = ossindexUser
-        token = ossindexToken
-    }
-```
-
-or
+In your build.gradle file, add the following.
 
 ```
 audit {
