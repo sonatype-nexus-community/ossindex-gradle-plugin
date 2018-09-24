@@ -125,11 +125,14 @@ gradle properties file to specify the cache folder. In the gradle properties,
 write this:
 
 ```
-ossindexUser = user@example.com
-ossindexToken = ef40752eeb642ba1c3df1893d270c6f9fb7ab9e1
+ossindexUser=user@example.com
+ossindexToken=ef40752eeb642ba1c3df1893d270c6f9fb7ab9e1
 ```
 
-In your build.gradle file, add this:
+In your build.gradle file, add one of the following. It seems that some users
+have different config formats (perhaps gradle version related?):
+
+either
 
 ```
 audit {
@@ -137,6 +140,16 @@ audit {
         token = ossindexToken
     }
 ```
+
+or
+
+```
+audit {
+        user = "$ossindexUser"
+        token = "$ossindexToken"
+    }
+```
+
 
 ### Dependency tree of vulnerabilities
 If the `--info` flag is provided to gradle it will output a dependency tree which shows the transitive dependencies which have vulnerabilities.
