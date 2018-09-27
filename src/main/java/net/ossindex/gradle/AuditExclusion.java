@@ -56,14 +56,15 @@ public class AuditExclusion
   }
 
   private PackageCoordinate buildPackage(final String def) {
-    String[] tokens = def.split(":");
+    String[] tokens = def.split("/");
     if (tokens.length >= 2) {
+      String[] nameTokens = tokens[1].split(":");
       Builder builder = PackageCoordinate.newBuilder()
           .withFormat("maven")
           .withNamespace(tokens[0])
-          .withName(tokens[1]);
-      if (tokens.length > 2) {
-        builder = builder.withVersion(tokens[2]);
+          .withName(nameTokens[0]);
+      if (nameTokens.length > 1) {
+        builder = builder.withVersion(nameTokens[1]);
       }
       return builder.build();
     }

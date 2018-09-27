@@ -31,10 +31,12 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.google.gson.Gson;
@@ -79,10 +81,9 @@ public class PackageRequestService
   private PackageRequestDto.Builder packages = PackageRequestDto.newBuilder();
 
   /**
-   * We assume that the results for a path will be returned in the same order that they are requested from the server.
-   * In other words there will be one path per package (see packages above).
+   * Map of coordinates to their inclusion paths
    */
-  private List<List<PackageCoordinate>> paths = new LinkedList<>();
+  private Map<String, List<PackageCoordinate>> paths = new HashMap<>();
 
   /**
    * List of all filters to apply
@@ -146,9 +147,10 @@ public class PackageRequestService
       // Build a default response for the query
       OssiPackage desc = new OssiPackage(pkg.getType(), pkg.getNamespace(), pkg.getName(), pkg.getVersion());
 
-      // Add the package path to the packages and path lists, in the same order
-      packages.withCoordinate(desc.getCoordinates());
-      paths.add(path);
+      // Add the package path to the packages and path lists
+      String coord = desc.getCoordinates();
+      packages.withCoordinate(coord);
+      paths.put(coord.toLowerCase(), path);
 
       return desc;
     }
@@ -253,16 +255,18 @@ public class PackageRequestService
   private Collection<OssiPackage> filterResults(final Collection<OssiPackage> pkgs) {
     if (!filters.isEmpty()) {
       List<OssiPackage> results = new LinkedList<>();
-      Iterator<OssiPackage> pkgIt = pkgs.iterator();
-      Iterator<List<PackageCoordinate>> pathIt = paths.iterator();
-      while (pkgIt.hasNext()) {
-        if (!pathIt.hasNext()) {
-          throw new IllegalArgumentException("Server results do not match request");
+
+      for (OssiPackage pkg: pkgs) {
+        String coord = pkg.getCoordinates().toLowerCase();
+        if (paths.containsKey(coord)) {
+          List<PackageCoordinate> path = paths.get(coord);
+          results.add(filterPackage(pkg, path));
+        } else {
+          LOG.error("WARNING: Could not find inclusion path for " + coord);
+          results.add(filterPackage(pkg, Collections.emptyList()));
         }
-        OssiPackage pkg = pkgIt.next();
-        List<PackageCoordinate> path = pathIt.next();
-        results.add(filterPackage(pkg, path));
       }
+
       return results;
     } else {
       return pkgs;
