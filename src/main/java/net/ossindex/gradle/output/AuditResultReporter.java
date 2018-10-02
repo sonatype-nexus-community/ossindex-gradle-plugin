@@ -49,13 +49,30 @@ public class AuditResultReporter
     }
 
     public void reportResult(Collection<MavenPackageDescriptor> results) {
-        int unIgnoredVulnerabilities = getSumOfUnfilteredVulnerabilities(results);
-        int excludedVulnerabilities = getSumOfFilteredVulnerabilities(results);
-        int totalVunerabilities = unIgnoredVulnerabilities + excludedVulnerabilities;
+        int unfilteredVulnerabilities = 0;
+        int totalVunerabilities = 0;
+
+        {
+            // Put in a block to ensure these variables are not used elsewhere. They cause confusion.
+            int unExcludedVulnerabilities = getSumOfUnfilteredVulnerabilities(results);
+            int excludedVulnerabilities = getSumOfFilteredVulnerabilities(results);
+            int ignoredVulnerabilities = getIgnoredVulnerabilityCount(results);
+
+            // All excluded and ignored count
+            unfilteredVulnerabilities = unExcludedVulnerabilities - ignoredVulnerabilities;
+
+            // All non-excluded and ignored
+            totalVunerabilities = unfilteredVulnerabilities + excludedVulnerabilities + ignoredVulnerabilities;
+        }
 
         if (totalVunerabilities == 0) {
             return;
         }
+
+        currentVulnerabilityTotals = String.format("%s unignored (of %s total) vulnerabilities found",
+            unfilteredVulnerabilities,
+            totalVunerabilities);
+        logger.error(currentVulnerabilityTotals);
 
         allGradleArtifacts = getAllDependencies();
 
@@ -67,8 +84,6 @@ public class AuditResultReporter
             if (settings.isIgnored(descriptor)) {
                 logger.info(descriptor.getMavenVersionId() + " is ignored due to settings");
                 int myMatches = descriptor.getVulnerabilityMatches();
-                unIgnoredVulnerabilities -= myMatches;
-                excludedVulnerabilities += myMatches;
                 continue;
             }
 
@@ -87,21 +102,16 @@ public class AuditResultReporter
             }
             reportVulnerableArtifact(importingGradleArtifact, descriptor);
             reportIntroducedVulnerabilities(descriptor);
-        }
 
-        currentVulnerabilityTotals = String.format("%s unignored (of %s total) vulnerabilities found",
-            unIgnoredVulnerabilities,
-            totalVunerabilities);
-        logger.error(currentVulnerabilityTotals);
-
-        // Update the JUnit plugin XML report object
-        junitXmlReportWriter.updateJunitReport(currentVulnerabilityTotals,
+            // Update the JUnit plugin XML report object
+            junitXmlReportWriter.updateJunitReport(currentVulnerabilityTotals,
                 thisTask,
                 currentVulnerableArtifact,
                 currentVulnerabilityList);
+        }
 
-        if (unIgnoredVulnerabilities > 0) {
-            throw new GradleException("Too many vulnerabilities (" + unIgnoredVulnerabilities + ") found.");
+        if (unfilteredVulnerabilities > 0) {
+            throw new GradleException("Too many vulnerabilities (" + unfilteredVulnerabilities + ") found.");
         }
     }
 
@@ -156,6 +166,17 @@ public class AuditResultReporter
         int count = 0;
         for (MavenPackageDescriptor pkg: results) {
             count += (pkg.getAllVulnerabilityCount() - pkg.getVulnerabilityMatches());
+        }
+        return count;
+    }
+
+    private int getIgnoredVulnerabilityCount(Collection<MavenPackageDescriptor> results) {
+        int count = 0;
+        for (MavenPackageDescriptor pkg: results) {
+            if (settings.isIgnored(pkg)) {
+                count += pkg.getVulnerabilityMatches();
+                continue;
+            }
         }
         return count;
     }
