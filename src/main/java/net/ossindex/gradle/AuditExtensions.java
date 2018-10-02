@@ -56,7 +56,6 @@ public class AuditExtensions
   private boolean isSpecificVersionIgnored(MavenPackageDescriptor descriptor) {
     return ignore.stream().anyMatch(ignored -> ignored.equals(descriptor.getMavenVersionId()));
   }
-
   private boolean isWholeArtifactIgnored(MavenPackageDescriptor descriptor) {
     return ignore.stream().anyMatch(ignored -> ignored.equals(descriptor.getMavenPackageId()));
   }

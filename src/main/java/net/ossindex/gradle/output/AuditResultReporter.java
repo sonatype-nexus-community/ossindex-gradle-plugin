@@ -2,6 +2,7 @@ package net.ossindex.gradle.output;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -48,12 +49,13 @@ public class AuditResultReporter
     }
 
     public void reportResult(Collection<MavenPackageDescriptor> results) {
-        int vulnerabilities = getSumOfVulnerabilities(results);
-        if (vulnerabilities == 0) {
+        int unIgnoredVulnerabilities = getSumOfVulnerabilities(results);
+        int excludedVulnerabilities = getExcludedVulnerabilities(results);
+        int totalVunerabilities = unIgnoredVulnerabilities + excludedVulnerabilities;
+
+        if (totalVunerabilities == 0) {
             return;
         }
-
-        int unignoredVulnerabilities = getUnignoredVulnerabilities(results);
 
         allGradleArtifacts = getAllDependencies();
 
@@ -64,18 +66,14 @@ public class AuditResultReporter
             }
             if (settings.isIgnored(descriptor)) {
                 logger.info(descriptor.getMavenVersionId() + " is ignored due to settings");
+                int myMatches = descriptor.getVulnerabilityMatches();
+                unIgnoredVulnerabilities -= myMatches;
+                excludedVulnerabilities += myMatches;
                 continue;
             }
 
-            // We already calculated unignored vulnerabilities. We need to include unexcluded vulnerabilities since they
-            // are handled by the audit library.
-            int actualVulnerabilities = descriptor.getVulnerabilities().size();
-            int expectedVulnerabilities = descriptor.getVulnerabilityMatches();
-            int unExcludedVulnerabilities = expectedVulnerabilities - actualVulnerabilities;
-            unignoredVulnerabilities -= unExcludedVulnerabilities;
-
             // Now bail if exclusions cause all issues in this package to be ignored
-            if (actualVulnerabilities == 0) {
+            if (descriptor.getVulnerabilityMatches() == 0) {
                 logger.info("Vulnerabilities in " + descriptor.getMavenVersionId() + " are excluded due to settings");
                 continue;
             }
@@ -92,8 +90,8 @@ public class AuditResultReporter
         }
 
         currentVulnerabilityTotals = String.format("%s unignored (of %s total) vulnerabilities found",
-                unignoredVulnerabilities,
-                vulnerabilities);
+            unIgnoredVulnerabilities,
+            totalVunerabilities);
         logger.error(currentVulnerabilityTotals);
 
         // Update the JUnit plugin XML report object
@@ -102,8 +100,8 @@ public class AuditResultReporter
                 currentVulnerableArtifact,
                 currentVulnerabilityList);
 
-        if (unignoredVulnerabilities > 0) {
-            throw new GradleException("Too many vulnerabilities (" + vulnerabilities + ") found.");
+        if (unIgnoredVulnerabilities > 0) {
+            throw new GradleException("Too many vulnerabilities (" + unIgnoredVulnerabilities + ") found.");
         }
     }
 
@@ -154,8 +152,21 @@ public class AuditResultReporter
         return results.stream().mapToInt(MavenPackageDescriptor::getVulnerabilityMatches).sum();
     }
 
-    private int getUnignoredVulnerabilities(Collection<MavenPackageDescriptor> results) {
-        return results.stream().filter(d -> !settings.isIgnored(d))
-                .mapToInt(MavenPackageDescriptor::getVulnerabilityMatches).sum();
+    private int getExcludedVulnerabilities(Collection<MavenPackageDescriptor> results) {
+        int count = 0;
+        for (MavenPackageDescriptor pkg: results) {
+            count += pkg.getUnfilteredVulnerabilityCount();
+        }
+        return count;
+    }
+
+    private Set<MavenPackageDescriptor> getUnignoredPackages(Collection<MavenPackageDescriptor> packages) {
+        Set<MavenPackageDescriptor> results = new HashSet<>();
+        for (MavenPackageDescriptor pkg: packages) {
+            if (!settings.isIgnored(pkg)) {
+                results.add(pkg);
+            }
+        }
+        return results;
     }
 }

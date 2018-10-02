@@ -27,6 +27,7 @@
 package net.ossindex.common;
 
 import java.util.List;
+import org.sonatype.goodies.packageurl.PackageUrl;
 
 /**
  * Represents an OSS Index package.
@@ -46,7 +47,7 @@ public class OssiPackage
 
   private List<OssiVulnerability> vulnerabilities;
 
-  private transient BasicPurl purl;
+  private transient PackageUrl purl;
 
   /**
    * Create a package coordinate
@@ -104,34 +105,34 @@ public class OssiPackage
     return unfilteredVulnerabilityMatches;
   }
 
-  public BasicPurl getPurl() {
+  public PackageUrl getPurl() {
     return purl;
   }
 
   public String getType() {
     if (purl == null) {
-      purl = new BasicPurl(coordinates);
+      purl = PackageUrl.parse(coordinates);
     }
     return purl.getType();
   }
 
   public String getNamespace() {
     if (purl == null) {
-      purl = new BasicPurl(coordinates);
+      purl = PackageUrl.parse(coordinates);
     }
-    return purl.getNamespace();
+    return purl.getNamespaceAsString();
   }
 
   public String getName() {
     if (purl == null) {
-      purl = new BasicPurl(coordinates);
+      purl = PackageUrl.parse(coordinates);
     }
     return purl.getName();
   }
 
   public String getVersion() {
     if (purl == null) {
-      purl = new BasicPurl(coordinates);
+      purl = PackageUrl.parse(coordinates);
     }
     return purl.getVersion();
   }
@@ -148,7 +149,7 @@ public class OssiPackage
 
     private List<OssiVulnerability> vulnerabilities;
 
-    private BasicPurl purl;
+    private PackageUrl purl;
 
     private Builder() {}
 
@@ -177,7 +178,7 @@ public class OssiPackage
       return this;
     }
 
-    public Builder withPurl(final BasicPurl val) {
+    public Builder withPurl(final PackageUrl val) {
       purl = val;
       return this;
     }
