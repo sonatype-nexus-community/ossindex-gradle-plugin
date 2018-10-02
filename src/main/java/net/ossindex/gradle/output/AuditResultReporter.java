@@ -49,8 +49,8 @@ public class AuditResultReporter
     }
 
     public void reportResult(Collection<MavenPackageDescriptor> results) {
-        int unIgnoredVulnerabilities = getSumOfVulnerabilities(results);
-        int excludedVulnerabilities = getExcludedVulnerabilities(results);
+        int unIgnoredVulnerabilities = getSumOfUnfilteredVulnerabilities(results);
+        int excludedVulnerabilities = getSumOfFilteredVulnerabilities(results);
         int totalVunerabilities = unIgnoredVulnerabilities + excludedVulnerabilities;
 
         if (totalVunerabilities == 0) {
@@ -148,25 +148,15 @@ public class AuditResultReporter
         return resolvedTopLevelArtifacts.stream().flatMap(a -> a.getAllArtifacts().stream()).collect(Collectors.toSet());
     }
 
-    private int getSumOfVulnerabilities(Collection<MavenPackageDescriptor> results) {
+    private int getSumOfUnfilteredVulnerabilities(Collection<MavenPackageDescriptor> results) {
         return results.stream().mapToInt(MavenPackageDescriptor::getVulnerabilityMatches).sum();
     }
 
-    private int getExcludedVulnerabilities(Collection<MavenPackageDescriptor> results) {
+    private int getSumOfFilteredVulnerabilities(Collection<MavenPackageDescriptor> results) {
         int count = 0;
         for (MavenPackageDescriptor pkg: results) {
-            count += pkg.getUnfilteredVulnerabilityCount();
+            count += (pkg.getAllVulnerabilityCount() - pkg.getVulnerabilityMatches());
         }
         return count;
-    }
-
-    private Set<MavenPackageDescriptor> getUnignoredPackages(Collection<MavenPackageDescriptor> packages) {
-        Set<MavenPackageDescriptor> results = new HashSet<>();
-        for (MavenPackageDescriptor pkg: packages) {
-            if (!settings.isIgnored(pkg)) {
-                results.add(pkg);
-            }
-        }
-        return results;
     }
 }

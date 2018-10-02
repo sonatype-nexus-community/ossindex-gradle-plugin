@@ -53,7 +53,7 @@ public class MavenPackageDescriptor extends MavenIdWrapper {
      *
      * @return Total number of vulnerabilities.
      */
-    public int getUnfilteredVulnerabilityCount() {
+    public int getAllVulnerabilityCount() {
         return unfilteredVulnerabilityCount;
     }
 

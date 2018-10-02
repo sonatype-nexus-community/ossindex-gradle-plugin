@@ -124,7 +124,7 @@ public class DependencyAuditor
             mvnPkg.setParent(new MavenIdWrapper(parent));
           }
         }
-        if (mvnPkg.getUnfilteredVulnerabilityCount() > 0) {
+        if (mvnPkg.getAllVulnerabilityCount() > 0) {
           results.add(mvnPkg);
         }
       }
