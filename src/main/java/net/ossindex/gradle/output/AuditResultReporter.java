@@ -50,6 +50,7 @@ public class AuditResultReporter
   public void reportResult(Collection<MavenPackageDescriptor> results) {
     int unfilteredVulnerabilities = 0;
     int totalVunerabilities = 0;
+    boolean passReported = false;
 
     {
       // Put in a block to ensure these variables are not used elsewhere. They cause confusion.
@@ -76,6 +77,7 @@ public class AuditResultReporter
     allGradleArtifacts = getAllDependencies();
 
     for (MavenPackageDescriptor descriptor : results) {
+
       if (descriptor.getVulnerabilities() == null) {
         logger.info("No vulnerabilities in " + descriptor.getMavenVersionId());
         continue;
@@ -89,6 +91,15 @@ public class AuditResultReporter
       // Now bail if exclusions cause all issues in this package to be ignored
       if (descriptor.getVulnerabilityMatches() == 0) {
         logger.info("Vulnerabilities in " + descriptor.getMavenVersionId() + " are excluded due to settings");
+
+        if (!passReported) {
+          // Update the JUnit plugin XML report object
+          junitXmlReportWriter.updateJunitReport(currentVulnerabilityTotals,
+              thisTask,
+              currentVulnerableArtifact,
+              currentVulnerabilityList);
+          passReported = true;
+        }
         continue;
       }
 

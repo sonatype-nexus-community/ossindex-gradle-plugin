@@ -139,7 +139,7 @@ public class JunitXmlReportWriter {
                 transformer.transform(source, result);
             }
         } else {
-            throw new java.io.IOException("Report (" + path + ") failed permissions check.");
+            throw new IOException("Report (" + path + ") failed permissions check.");
         }
     }
 
@@ -175,7 +175,7 @@ public class JunitXmlReportWriter {
         nodeAttr.setTextContent(value);
     }
 
-    private Boolean parentDirIsWritable(File path) throws java.io.IOException {
+    private Boolean parentDirIsWritable(File path) throws IOException {
         File parentDir = path.getParentFile();
         if (!parentDir.exists()) {
             parentDir.mkdirs();
