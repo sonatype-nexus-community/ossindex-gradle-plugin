@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -114,7 +114,7 @@ public class DependencyAuditor
 
   public Collection<MavenPackageDescriptor> runAudit() {
     try {
-      List<MavenPackageDescriptor> results = new LinkedList<>();
+      Set<MavenPackageDescriptor> results = new HashSet<>();
       Collection<OssiPackage> packages = request.run();
       for (OssiPackage pkg : packages) {
         MavenPackageDescriptor mvnPkg = new MavenPackageDescriptor(pkg);
