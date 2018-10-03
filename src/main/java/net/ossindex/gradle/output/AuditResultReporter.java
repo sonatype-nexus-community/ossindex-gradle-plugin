@@ -50,7 +50,7 @@ public class AuditResultReporter
   public void reportResult(Collection<MavenPackageDescriptor> results) {
     int unfilteredVulnerabilities = 0;
     int totalVunerabilities = 0;
-    boolean passReported = false;
+    boolean failReported = false;
 
     {
       // Put in a block to ensure these variables are not used elsewhere. They cause confusion.
@@ -76,6 +76,7 @@ public class AuditResultReporter
 
     allGradleArtifacts = getAllDependencies();
 
+
     for (MavenPackageDescriptor descriptor : results) {
 
       if (descriptor.getVulnerabilities() == null) {
@@ -84,22 +85,12 @@ public class AuditResultReporter
       }
       if (settings.isIgnored(descriptor)) {
         logger.info(descriptor.getMavenVersionId() + " is ignored due to settings");
-        int myMatches = descriptor.getVulnerabilityMatches();
         continue;
       }
 
       // Now bail if exclusions cause all issues in this package to be ignored
       if (descriptor.getVulnerabilityMatches() == 0) {
         logger.info("Vulnerabilities in " + descriptor.getMavenVersionId() + " are excluded due to settings");
-
-        if (!passReported) {
-          // Update the JUnit plugin XML report object
-          junitXmlReportWriter.updateJunitReport(currentVulnerabilityTotals,
-              thisTask,
-              currentVulnerableArtifact,
-              currentVulnerabilityList);
-          passReported = true;
-        }
         continue;
       }
 
@@ -114,15 +105,25 @@ public class AuditResultReporter
       reportIntroducedVulnerabilities(descriptor);
 
       // Update the JUnit plugin XML report object
-      junitXmlReportWriter.updateJunitReport(currentVulnerabilityTotals,
-          thisTask,
-          currentVulnerableArtifact,
-          currentVulnerabilityList);
+      writeTestcaseXml();
+      failReported = true;
+    }
+
+    // If we have not reported any fails on this module, then we should report a pass
+    if (!failReported) {
+      writeTestcaseXml();
     }
 
     if (unfilteredVulnerabilities > 0) {
       throw new GradleException("Too many vulnerabilities (" + unfilteredVulnerabilities + ") found.");
     }
+  }
+
+  private void writeTestcaseXml() {
+    junitXmlReportWriter.updateJunitReport(currentVulnerabilityTotals,
+        thisTask,
+        currentVulnerableArtifact,
+        currentVulnerabilityList);
   }
 
   private void reportVulnerableArtifact(GradleArtifact importingArtifact, MavenPackageDescriptor descriptor) {
