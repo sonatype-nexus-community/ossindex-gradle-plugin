@@ -7,6 +7,7 @@ import org.gradle.internal.impldep.com.google.gson.annotations.SerializedName;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import java.util.List;
+import java.util.Objects;
 
 public class MavenPackageDescriptor extends MavenIdWrapper {
 
@@ -75,4 +76,21 @@ public class MavenPackageDescriptor extends MavenIdWrapper {
         return vulnerabilities;
     }
 
+    @Override
+    public int hashCode() {return 31 * super.hashCode() + Objects.hash(parent);}
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        if (!super.equals(obj)) {
+            return false;
+        }
+        final MavenPackageDescriptor other = (MavenPackageDescriptor) obj;
+        return Objects.equals(this.parent, other.parent);
+    }
 }

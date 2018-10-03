@@ -2,6 +2,7 @@ package net.ossindex.gradle.output;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -165,8 +166,28 @@ public class AuditResultReporter
             "Couldn't find importing artifact for " + mavenPackageDescriptor.getMavenVersionId()));
   }
 
+  /**
+   * Recursively get all dependencies
+   */
   private Set<GradleArtifact> getAllDependencies() {
-    return resolvedTopLevelArtifacts.stream().flatMap(a -> a.getAllArtifacts().stream()).collect(Collectors.toSet());
+    Set<GradleArtifact> results = new HashSet<>();
+    for (GradleArtifact artifact: resolvedTopLevelArtifacts) {
+      buildDependencies(results, artifact);
+    }
+    return results;
+  }
+
+  /**
+   * Recursively get all dependencies
+   */
+  private void buildDependencies(final Set<GradleArtifact> results, final GradleArtifact parent) {
+    results.add(parent);
+    Set<GradleArtifact> children = parent.getChildren();
+    for (GradleArtifact child: children) {
+      if (!results.contains(child)) {
+        buildDependencies(results, child);
+      }
+    }
   }
 
   private int getSumOfUnfilteredVulnerabilities(Collection<MavenPackageDescriptor> results) {
