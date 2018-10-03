@@ -27,9 +27,27 @@ repositories {
     mavenCentral()
 }
 
+if (JavaVersion.current().isJava8Compatible()) {
+    allprojects {
+        tasks.withType(Javadoc) {
+            options.addStringOption('Xdoclint:none', '-quiet')
+        }
+    }
+}
+
 dependencies {
     compile gradleApi()
-    compile 'net.ossindex:ossindex-api:3.0.9'
+    compile 'org.apache.httpcomponents:httpclient:4.5.6'
+    compile 'com.google.code.gson:gson:2.8.0'
+    compile 'org.apache.httpcomponents:httpcore:4.4.10'
+    compile 'commons-codec:commons-codec:1.10'
+    compile 'net.ossindex:heuristic-version:2.0.0'
+    compile 'org.mockito:mockito-core:2.18.0'
+    compile 'org.mapdb:mapdb:3.0.7'
+    compile 'org.slf4j:slf4j-api:1.7.25'
+    compile 'org.slf4j:slf4j-simple:1.7.25'
+
+
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:2.7.13'
     testCompile gradleTestKit()
@@ -52,6 +70,8 @@ pluginBundle {
     }
 }
 
-task showMeCache << {
-    configurations.compile.each { println it }
+task showMeCache {
+    doLast {
+        configurations.compile.each { println it }
+    }
 }
