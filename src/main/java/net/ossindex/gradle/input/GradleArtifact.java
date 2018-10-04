@@ -1,11 +1,16 @@
 package net.ossindex.gradle.input;
 
+import net.ossindex.gradle.OssIndexPlugin;
 import org.gradle.api.artifacts.ResolvedDependency;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class GradleArtifact {
+    private static final Logger logger = LoggerFactory.getLogger(GradleArtifact.class);
+
     private final GradleArtifact parent;
     private final Set<GradleArtifact> children;
     private final String group;
@@ -53,8 +58,18 @@ public class GradleArtifact {
     public GradleArtifact getTopMostParent() {
         if (parent == null) return this;
         GradleArtifact currentParent = parent;
+        Set<GradleArtifact> visited = new HashSet<>();
         while (currentParent.parent != null) {
-            currentParent = parent.parent;
+            currentParent = currentParent.parent;
+
+            if (visited.contains(currentParent)) {
+                logger.warn("artifact loop detected, starting with " + currentParent.getGroup() +
+                    ":" + currentParent.getName() +
+                    ":" + currentParent.getVersion());
+                break;
+            }
+
+            visited.add(currentParent);
         }
         return currentParent;
     }
