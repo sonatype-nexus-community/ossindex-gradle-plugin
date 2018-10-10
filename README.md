@@ -263,8 +263,8 @@ directly in the specified package.
 
 ```
 audit {
-    exclusion = {
-        packages: [ 'org.dependency:thelibrary:1.0.0' ]
+    exclusion {
+        packages = [ 'org.dependency:thelibrary:1.0.0' ]
     }
 }
 ```
@@ -274,8 +274,8 @@ directly in the specified package.
 
 ```
 audit {
-    exclusion = {
-        packages: [ 'org.dependency:thelibrary' ]
+    exclusion {
+        packages = [ 'org.dependency:thelibrary' ]
     }
 }
 ```
@@ -285,8 +285,8 @@ packages. This will ignore *all instances* of this vulnerability in any package.
 
 ```
 audit {
-    exclusion = {
-        id: [ '1234567890' ]
+    exclusion {
+        id = '96a6fc01-c9c1-4098-94e5-c30f4052a3d4'
     }
 }
 ```
@@ -305,9 +305,9 @@ package will still report the vulnerability.
 
 ```
 audit {
-    exclusion = {
-        packages: [ 'org.dependency:thelibrary:1.0.0' ]
-        id: [ '1234567890' ]
+    exclusion {
+        packages = [ 'org.dependency:thelibrary:1.0.0' ]
+        id = '96a6fc01-c9c1-4098-94e5-c30f4052a3d4'
     }
 }
 ```
@@ -327,9 +327,9 @@ package will still report the vulnerability.
 
 ```
 audit {
-    exclusion = {
-        packages: [ 'org.dependency:thelibrary' ]
-        id: [ '1234567890' ]
+    exclusion {
+        packages = [ 'org.dependency:thelibrary' ]
+        vid = '96a6fc01-c9c1-4098-94e5-c30f4052a3d4'
     }
 }
 ```
@@ -350,9 +350,9 @@ The vulnerability will still be reported if:
 
 ```
 audit {
-    exclusion = {
-        packages: [ 'org.parent.package:theParent', 'org.dependency:vulnerablePackage ]
-        id: [ '1234567890' ]
+    exclusion {
+        packages = [ 'org.parent.package:theParent', 'org.dependency:vulnerablePackage ]
+        vid '96a6fc01-c9c1-4098-94e5-c30f4052a3d4'
     }
 }
 ```
