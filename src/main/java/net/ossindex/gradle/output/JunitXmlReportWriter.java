@@ -103,10 +103,10 @@ public class JunitXmlReportWriter
 
     try (DocResource docResource = new DocResource(pathToReport)) {
       Document doc = docResource.getDocument();
-        String testCount = getTotalOfElementsByName(doc, "testcase").toString();
-        modifyElementAttribute(doc, "testsuites", 0, "tests", testCount);
-        String failureCount = getTotalOfElementsByName(doc, "failure").toString();
-        modifyElementAttribute(doc, "testsuites", 0, "failures", failureCount);
+      String testCount = getTotalOfElementsByName(doc, "testcase").toString();
+      modifyElementAttribute(doc, "testsuites", 0, "tests", testCount);
+      String failureCount = getTotalOfElementsByName(doc, "failure").toString();
+      modifyElementAttribute(doc, "testsuites", 0, "failures", failureCount);
     }
   }
 
@@ -147,20 +147,23 @@ public class JunitXmlReportWriter
    *
    * Every document edit is performed by:
    *
-   *   1. Locking the file
-   *   2. Creating/Loading the document
-   *   3. Performing the document changes
-   *   4. Writing the file
-   *   5. Unlocking the file
+   * 1. Locking the file
+   * 2. Creating/Loading the document
+   * 3. Performing the document changes
+   * 4. Writing the file
+   * 5. Unlocking the file
    *
    * This is done to ensure that parallel builds can all work on the same report file.
    */
-  class DocResource implements AutoCloseable
+  class DocResource
+      implements AutoCloseable
   {
 
     private String path;
 
     private Document doc;
+
+    private FileLock fileLock;
 
     public DocResource(final String path) {
       File f = new File(path);
@@ -170,14 +173,13 @@ public class JunitXmlReportWriter
         RandomAccessFile randomAccessFile = new RandomAccessFile(path, "rw");
         FileChannel fc = randomAccessFile.getChannel();
 
-        try (FileLock fileLock = fc.lock()) {
-          if (fc.size() == 0) {
-            // If this is a new file, then initialize it.
-            doc = createDocument();
-          }
-          else {
-            doc = loadDocument();
-          }
+        fileLock = fc.lock();
+        if (fc.size() == 0) {
+          // If this is a new file, then initialize it.
+          doc = createDocument();
+        }
+        else {
+          doc = loadDocument();
         }
       }
       catch (IOException e) {
@@ -193,6 +195,7 @@ public class JunitXmlReportWriter
     @Override
     public void close() throws IOException {
       writeDocument(doc);
+      fileLock.close();
     }
 
     /**
