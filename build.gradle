@@ -57,7 +57,7 @@ dependencies {
 }
 
 pluginBundle {
-    website = 'http://www.ossindex.net/'
+    website = 'https://ossindex.sonatype.org/'
     vcsUrl = 'https://github.com/ossindex/ossindex-gradle-plugin'
     description = 'Checks dependencies for known vulnerabilities'
     tags = ['cve', 'audit', 'security', 'dependencies']
