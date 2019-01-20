@@ -11,6 +11,8 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -44,6 +46,12 @@ public class JunitXmlReportWriter
 
   private Long startSeconds = null;
 
+  /**
+   * The DocResource class does a file lock preventing concurrent access from other processes, but we still need
+   * to prevent concurrent access of the document in *THIS* class.
+   */
+  private static Lock lock = new ReentrantLock();
+
   public void init(String junitReport) {
 
     if (junitReport == null) {
@@ -70,6 +78,7 @@ public class JunitXmlReportWriter
       return;
     }
 
+    lock.lock();
     try (DocResource docResource = new DocResource(pathToReport)) {
       Document doc = docResource.getDocument();
 
@@ -94,6 +103,9 @@ public class JunitXmlReportWriter
     catch (IOException e) {
       logger.error("Exception writing log: " + e);
     }
+    finally {
+      lock.unlock();
+    }
   }
 
   public void writeXmlReport(String pathToReport) throws Exception {
@@ -101,12 +113,16 @@ public class JunitXmlReportWriter
       return;
     }
 
+    lock.lock();
     try (DocResource docResource = new DocResource(pathToReport)) {
       Document doc = docResource.getDocument();
       String testCount = getTotalOfElementsByName(doc, "testcase").toString();
       modifyElementAttribute(doc, "testsuites", 0, "tests", testCount);
       String failureCount = getTotalOfElementsByName(doc, "failure").toString();
       modifyElementAttribute(doc, "testsuites", 0, "failures", failureCount);
+    }
+    finally {
+      lock.unlock();
     }
   }
 
