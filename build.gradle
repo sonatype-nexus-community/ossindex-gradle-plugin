@@ -12,7 +12,7 @@ buildscript {
 }
 
 group 'net.ossindex'
-version '0.4.5-beta'
+version '0.4.6-beta'
 
 apply plugin: "com.gradle.plugin-publish"
 apply plugin: 'java'
@@ -57,7 +57,7 @@ dependencies {
 }
 
 pluginBundle {
-    website = 'http://www.ossindex.net/'
+    website = 'https://ossindex.sonatype.org/'
     vcsUrl = 'https://github.com/ossindex/ossindex-gradle-plugin'
     description = 'Checks dependencies for known vulnerabilities'
     tags = ['cve', 'audit', 'security', 'dependencies']
