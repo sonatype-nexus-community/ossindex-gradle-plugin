@@ -12,7 +12,7 @@ buildscript {
 }
 
 group 'net.ossindex'
-version '0.4.6-beta'
+version '0.4.7-beta'
 
 apply plugin: "com.gradle.plugin-publish"
 apply plugin: 'java'
@@ -37,21 +37,21 @@ if (JavaVersion.current().isJava8Compatible()) {
 
 dependencies {
     compile gradleApi()
-    compile 'org.sonatype.goodies:package-url-java:1.0.1'
-    compile 'org.apache.httpcomponents:httpclient:4.5.6'
-    compile 'com.google.code.gson:gson:2.8.0'
-    compile 'org.apache.httpcomponents:httpcore:4.4.10'
-    compile 'commons-codec:commons-codec:1.10'
-    compile 'net.ossindex:heuristic-version:2.0.0'
-    compile 'org.mockito:mockito-core:2.18.0'
-    compile 'org.mapdb:mapdb:3.0.7'
-    compile 'org.slf4j:slf4j-api:1.7.25'
-    compile 'org.slf4j:slf4j-simple:1.7.25'
+    implementation 'org.sonatype.goodies:package-url-java:1.0.1'
+    implementation 'org.apache.httpcomponents:httpclient:4.5.6'
+    implementation 'com.google.code.gson:gson:2.8.0'
+    implementation 'org.apache.httpcomponents:httpcore:4.4.10'
+    implementation 'commons-codec:commons-codec:1.10'
+    implementation 'net.ossindex:heuristic-version:2.0.0'
+    implementation 'org.mockito:mockito-core:2.18.0'
+    implementation 'org.mapdb:mapdb:3.0.7'
+    implementation 'org.slf4j:slf4j-api:1.7.25'
+    implementation 'org.slf4j:slf4j-simple:1.7.25'
 
-    testCompile 'junit:junit:4.12'
-    testCompile 'org.mockito:mockito-core:2.7.13'
-    testCompile gradleTestKit()
-    testCompile('org.spockframework:spock-core:1.0-groovy-2.4') {
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'org.mockito:mockito-core:2.7.13'
+    testImplementation gradleTestKit()
+    testImplementation('org.spockframework:spock-core:1.0-groovy-2.4') {
         exclude module: 'groovy-all'
     }
 }
