@@ -1,18 +1,21 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ConfigureShadowRelocation
+
 buildscript {
     repositories {
         maven {
             url "https://plugins.gradle.org/m2/"
         }
         jcenter()
+
     }
     dependencies {
-        classpath "com.gradle.publish:plugin-publish-plugin:0.9.7"
-        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.1'
+        classpath "com.gradle.publish:plugin-publish-plugin:0.10.1"
+        classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.4'
     }
 }
 
 group 'net.ossindex'
-version '0.4.7-beta'
+version '0.4.7-beta8'
 
 apply plugin: "com.gradle.plugin-publish"
 apply plugin: 'java'
@@ -35,18 +38,25 @@ if (JavaVersion.current().isJava8Compatible()) {
     }
 }
 
+// The code depends on a specially shadowed copy of mapdb
+tasks.compileJava.dependsOn(':ossi-mapdb:shadowJar')
+
 dependencies {
-    compile gradleApi()
+    shadow localGroovy()
+    shadow gradleApi()
+
     implementation 'org.sonatype.goodies:package-url-java:1.0.1'
-    implementation 'org.apache.httpcomponents:httpclient:4.5.6'
+    implementation 'org.apache.httpcomponents:httpclient:4.5.7'
     implementation 'com.google.code.gson:gson:2.8.0'
-    implementation 'org.apache.httpcomponents:httpcore:4.4.10'
+    implementation 'org.apache.httpcomponents:httpcore:4.4.11'
     implementation 'commons-codec:commons-codec:1.10'
     implementation 'net.ossindex:heuristic-version:2.0.0'
     implementation 'org.mockito:mockito-core:2.18.0'
-    implementation 'org.mapdb:mapdb:3.0.7'
     implementation 'org.slf4j:slf4j-api:1.7.25'
     implementation 'org.slf4j:slf4j-simple:1.7.25'
+
+    // Use our shadow copy of mapdb
+    compile files ('ossi-mapdb/build/libs/ossi-mapdb-3.0.7.jar')
 
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.mockito:mockito-core:2.7.13'
@@ -73,5 +83,12 @@ pluginBundle {
 task showMeCache {
     doLast {
         configurations.compile.each { println it }
+    }
+}
+
+// Ensure we package our shadow jar
+jar {
+    from {
+        zipTree('ossi-mapdb/build/libs/ossi-mapdb-3.0.7.jar')
     }
 }

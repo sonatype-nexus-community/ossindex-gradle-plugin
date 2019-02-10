@@ -1,2 +1,3 @@
 rootProject.name = 'ossindex-gradle-plugin'
 
+include 'ossi-mapdb'
