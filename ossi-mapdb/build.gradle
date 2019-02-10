@@ -26,11 +26,17 @@ dependencies {
     implementation 'org.mapdb:mapdb:3.0.7'
 }
 
-task relocateShadowJar(type: ConfigureShadowRelocation) {
-    target = tasks.shadowJar
+// Configuring Filtering for Relocation
+shadowJar {
+  relocate 'kotlin', 'shadow.kotlin'
+  relocate 'net.jpountz', 'shadow.net.jpountz'
 }
 
-tasks.shadowJar.dependsOn tasks.relocateShadowJar
+//task relocateShadowJar(type: ConfigureShadowRelocation) {
+//    target = tasks.shadowJar
+//}
+//
+//tasks.shadowJar.dependsOn tasks.relocateShadowJar
 
 configurations.archives.artifacts.clear()
 artifacts {
