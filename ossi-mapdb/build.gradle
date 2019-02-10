@@ -1,0 +1,42 @@
+// Special shadow jar for mapdb to eliminate dependency collision
+import com.github.jengelman.gradle.plugins.shadow.tasks.ConfigureShadowRelocation
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.4'
+    }
+}
+
+version '3.0.7'
+
+apply plugin: 'groovy'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    shadow localGroovy()
+    shadow gradleApi()
+
+    implementation 'org.mapdb:mapdb:3.0.7'
+}
+
+// Configuring Filtering for Relocation
+shadowJar {
+  relocate 'kotlin', 'shadow.kotlin'
+  relocate 'net.jpountz', 'shadow.net.jpountz'
+}
+
+configurations.archives.artifacts.clear()
+artifacts {
+    add("archives", shadowJar)
+}
+
+shadowJar {
+    classifier = null // don't add "-all" to the generated jar
+}
