@@ -113,8 +113,6 @@ public class OssIndexPlugin implements Plugin<Project> {
         ArtifactGatherer gatherer = factory.getGatherer();
         Set<GradleArtifact> gradleArtifacts = gatherer != null ? gatherer.gatherResolvedArtifacts(task.getProject()) : null;
 
-        logger.error("Zounds");
-
         AuditExtensions auditConfig = getAuditExtensions(task.getProject());
         DependencyAuditor auditor = factory.getDependencyAuditor(auditConfig, gradleArtifacts, proxies);
 
