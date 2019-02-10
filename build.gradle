@@ -15,7 +15,7 @@ buildscript {
 }
 
 group 'net.ossindex'
-version '0.4.7-beta8'
+version '0.4.7-beta9'
 
 apply plugin: "com.gradle.plugin-publish"
 apply plugin: 'java'
@@ -91,4 +91,9 @@ jar {
     from {
         zipTree('ossi-mapdb/build/libs/ossi-mapdb-3.0.7.jar')
     }
+}
+
+wrapper {
+    gradleVersion = "5.2"
+    distributionType = Wrapper.DistributionType.ALL
 }
