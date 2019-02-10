@@ -32,12 +32,6 @@ shadowJar {
   relocate 'net.jpountz', 'shadow.net.jpountz'
 }
 
-//task relocateShadowJar(type: ConfigureShadowRelocation) {
-//    target = tasks.shadowJar
-//}
-//
-//tasks.shadowJar.dependsOn tasks.relocateShadowJar
-
 configurations.archives.artifacts.clear()
 artifacts {
     add("archives", shadowJar)

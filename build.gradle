@@ -15,7 +15,7 @@ buildscript {
 }
 
 group 'net.ossindex'
-version '0.4.7-beta11'
+version '0.4.8'
 
 apply plugin: "com.gradle.plugin-publish"
 apply plugin: 'java'
