@@ -75,3 +75,8 @@ task showMeCache {
         configurations.compile.each { println it }
     }
 }
+
+wrapper {
+    gradleVersion = "5.2"
+    distributionType = Wrapper.DistributionType.ALL
+}
