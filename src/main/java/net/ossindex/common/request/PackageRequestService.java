@@ -42,15 +42,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import net.ossindex.common.IPackageRequest;
-import net.ossindex.common.PackageCoordinate;
 import net.ossindex.common.OssiPackage;
 import net.ossindex.common.OssiVulnerability;
+import net.ossindex.common.PackageCoordinate;
 import net.ossindex.common.filter.IVulnerabilityFilter;
 import net.ossindex.common.filter.VulnerabilityFilterFactory;
-//import shadow.org.mapdb.DB;
-//import shadow.org.mapdb.DBMaker;
-//import shadow.org.mapdb.HTreeMap;
-//import shadow.org.mapdb.Serializer;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
@@ -181,11 +177,13 @@ public class PackageRequestService
             .transactionEnable()
             .fileLockWait(FILE_LOCK_WAIT)
             .make();
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         LOG.error("Could not create cache file (" + cacheFile + "): " + e.getMessage());
         db = DBMaker.memoryDB().make();
       }
-    } else {
+    }
+    else {
       db = DBMaker.memoryDB().make();
     }
 
@@ -204,7 +202,7 @@ public class PackageRequestService
       // Maximum number of packages per request is 128, so we may need to make multiple requests. The top level
       // loop ensures we check for all coordinates.
       int count = 0;
-      while(count < coords.length) {
+      while (count < coords.length) {
 
         PackageRequestDto.Builder usePackages = PackageRequestDto.newBuilder();
 
@@ -250,7 +248,8 @@ public class PackageRequestService
       }
       results = filterResults(results); // This will remove vulnerabilities from packages
       return results;
-    } finally {
+    }
+    finally {
       db.close();
     }
   }
@@ -259,19 +258,21 @@ public class PackageRequestService
     if (!filters.isEmpty()) {
       List<OssiPackage> results = new LinkedList<>();
 
-      for (OssiPackage pkg: pkgs) {
+      for (OssiPackage pkg : pkgs) {
         String coord = pkg.getCoordinates().toLowerCase();
         if (paths.containsKey(coord)) {
           List<PackageCoordinate> path = paths.get(coord);
           results.add(filterPackage(pkg, path));
-        } else {
+        }
+        else {
           LOG.error("WARNING: Could not find inclusion path for " + coord);
           results.add(filterPackage(pkg, Collections.emptyList()));
         }
       }
 
       return results;
-    } else {
+    }
+    else {
       return pkgs;
     }
   }
