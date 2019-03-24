@@ -182,10 +182,14 @@ public class JunitXmlReportWriter
     private FileLock fileLock;
 
     public DocResource(final String path) {
-      File f = new File(path);
-      this.path = f.getAbsolutePath();
-
       try {
+        if (!parentDirIsWritable(new File(path))) {
+          throw new IOException(("Report directory is not writable: " + path));
+        }
+
+        File f = new File(path);
+        this.path = f.getAbsolutePath();
+
         RandomAccessFile randomAccessFile = new RandomAccessFile(path, "rw");
         FileChannel fc = randomAccessFile.getChannel();
 
