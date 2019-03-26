@@ -25,6 +25,8 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.apache.commons.lang3.SystemUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Attr;
@@ -300,12 +302,20 @@ public class JunitXmlReportWriter
       parentDir.mkdirs();
     }
     if (parentDir.exists()) {
-      Set<PosixFilePermission> permissions = Files
-          .getPosixFilePermissions(Paths.get(parentDir.getAbsolutePath()), LinkOption.NOFOLLOW_LINKS);
-      return (permissions.contains(PosixFilePermission.OTHERS_WRITE) ||
-          permissions.contains(PosixFilePermission.GROUP_WRITE) ||
-          permissions.contains(PosixFilePermission.OWNER_WRITE)
-      );
+      if (SystemUtils.IS_OS_WINDOWS) {
+        // Special code for windows
+        return Files.isWritable(parentDir.toPath());
+      }
+      else {
+        // Leave the fancy code for unix based systems. We don't want to disturb any magic that
+        // may be running here, so don't remove for now.
+        Set<PosixFilePermission> permissions = Files
+            .getPosixFilePermissions(Paths.get(parentDir.getAbsolutePath()), LinkOption.NOFOLLOW_LINKS);
+        return (permissions.contains(PosixFilePermission.OTHERS_WRITE) ||
+            permissions.contains(PosixFilePermission.GROUP_WRITE) ||
+            permissions.contains(PosixFilePermission.OWNER_WRITE)
+        );
+      }
     }
     return false;
   }

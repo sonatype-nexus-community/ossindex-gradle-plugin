@@ -15,7 +15,7 @@ buildscript {
 }
 
 group 'net.ossindex'
-version '0.4.9'
+version '0.4.10'
 
 apply plugin: "com.gradle.plugin-publish"
 apply plugin: 'java'
@@ -54,6 +54,7 @@ dependencies {
     implementation 'org.mockito:mockito-core:2.18.0'
     implementation 'org.slf4j:slf4j-api:1.7.25'
     implementation 'org.slf4j:slf4j-simple:1.7.25'
+    implementation 'org.apache.commons:commons-lang3:3.8.1'
 
     // Use our shadow copy of mapdb
     compile files ('ossi-mapdb/build/libs/ossi-mapdb-3.0.7.jar')
