@@ -1,10 +1,11 @@
 package net.ossindex.gradle.output;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Paths;
@@ -34,6 +35,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 public class JunitXmlReportWriter
@@ -104,6 +106,7 @@ public class JunitXmlReportWriter
     }
     catch (IOException e) {
       logger.error("Exception writing log: " + e);
+      e.printStackTrace();
     }
     finally {
       lock.unlock();
@@ -183,6 +186,8 @@ public class JunitXmlReportWriter
 
     private FileLock fileLock;
 
+    private FileChannel fc;
+
     public DocResource(final String path) {
       try {
         if (!parentDirIsWritable(new File(path))) {
@@ -193,7 +198,7 @@ public class JunitXmlReportWriter
         this.path = f.getAbsolutePath();
 
         RandomAccessFile randomAccessFile = new RandomAccessFile(path, "rw");
-        FileChannel fc = randomAccessFile.getChannel();
+        fc = randomAccessFile.getChannel();
 
         fileLock = fc.lock();
         if (fc.size() == 0) {
@@ -218,6 +223,7 @@ public class JunitXmlReportWriter
     public void close() throws IOException {
       writeDocument(doc);
       fileLock.close();
+      fc.close();
     }
 
     /**
@@ -246,7 +252,25 @@ public class JunitXmlReportWriter
     private Document loadDocument() {
       Document doc = null;
       try {
-        doc = getDocBuilder().parse(pathToReport);
+        StringBuilder sb = new StringBuilder();
+        ByteBuffer buf = ByteBuffer.allocate(512);
+        Charset charset = Charset.forName("UTF-8");
+
+        fc.position(0);
+
+        int count = fc.read(buf);
+        while (count != -1) {
+          buf.flip();
+          CharBuffer chbuf = charset.decode(buf);
+          for ( int i = 0; i < count; i++ ) {
+            sb.append(chbuf.get());
+          }
+          buf.clear();
+          count = fc.read(buf);
+        }
+
+        InputSource is = new InputSource(new StringReader(sb.toString()));
+        doc = getDocBuilder().parse(is);
       }
       catch (SAXException | IOException e) {
         e.printStackTrace();
@@ -280,12 +304,25 @@ public class JunitXmlReportWriter
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         Transformer transformer = transformerFactory.newTransformer();
         DOMSource source = new DOMSource(doc);
-        StreamResult result = new StreamResult(pathToReport);
+        StringWriter writer = new StringWriter();
+        StreamResult result = new StreamResult(writer);
 
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
 
         transformer.transform(source, result);
+        String s = writer.toString();
+        fc.truncate(0);
+
+        ByteBuffer buf = ByteBuffer.allocate(s.length());
+        buf.clear();
+        buf.put(s.getBytes());
+
+        buf.flip();
+
+        while(buf.hasRemaining()) {
+          fc.write(buf);
+        }
       }
       catch (TransformerConfigurationException e) {
         throw new IOException(e);
@@ -299,18 +336,21 @@ public class JunitXmlReportWriter
   private Boolean parentDirIsWritable(File path) throws IOException {
     File parentDir = path.getParentFile();
     if (!parentDir.exists()) {
-      parentDir.mkdirs();
+      if (!parentDir.mkdirs()) {
+        logger.error("Failed to create directory: " + parentDir.getAbsolutePath());
+      }
     }
     if (parentDir.exists()) {
       if (SystemUtils.IS_OS_WINDOWS) {
         // Special code for windows
-        return Files.isWritable(parentDir.toPath());
+        return parentDir.canWrite();
       }
       else {
         // Leave the fancy code for unix based systems. We don't want to disturb any magic that
         // may be running here, so don't remove for now.
         Set<PosixFilePermission> permissions = Files
             .getPosixFilePermissions(Paths.get(parentDir.getAbsolutePath()), LinkOption.NOFOLLOW_LINKS);
+
         return (permissions.contains(PosixFilePermission.OTHERS_WRITE) ||
             permissions.contains(PosixFilePermission.GROUP_WRITE) ||
             permissions.contains(PosixFilePermission.OWNER_WRITE)
