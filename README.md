@@ -286,7 +286,7 @@ packages. This will ignore *all instances* of this vulnerability in any package.
 ```
 audit {
     exclusion {
-        id = '96a6fc01-c9c1-4098-94e5-c30f4052a3d4'
+        vid = '96a6fc01-c9c1-4098-94e5-c30f4052a3d4'
     }
 }
 ```
@@ -307,7 +307,7 @@ package will still report the vulnerability.
 audit {
     exclusion {
         packages = [ 'org.dependency:thelibrary:1.0.0' ]
-        id = '96a6fc01-c9c1-4098-94e5-c30f4052a3d4'
+        vid = '96a6fc01-c9c1-4098-94e5-c30f4052a3d4'
     }
 }
 ```
